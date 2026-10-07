@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { HomePage } from '@/pages/home-page'
 import { FeedPage } from '@/pages/feed-page'
 import { ItemDetailPage } from '@/pages/item-detail-page'
@@ -14,6 +14,9 @@ import { NewListingPage } from '@/pages/new-listing-page'
 import { ListingDetailPage } from '@/pages/listing-detail-page'
 import { ListingPickupTimesPage } from '@/pages/listing-pickup-times-page'
 import { ListingSaleCompletedPage } from '@/pages/listing-sale-completed-page'
+import { UiKitPrimitivesPage } from '@/pages/ui-kit/primitives-page'
+import { UiKitFormsPage } from '@/pages/ui-kit/forms-page'
+import { UiKitDomainPage } from '@/pages/ui-kit/domain-page'
 
 function App() {
   return (
@@ -33,6 +36,11 @@ function App() {
       <Route path="/listings/:id" element={<ListingDetailPage />} />
       <Route path="/listings/:id/pickup-times" element={<ListingPickupTimesPage />} />
       <Route path="/listings/:id/sale-completed" element={<ListingSaleCompletedPage />} />
+      {/* Shared components catalog */}
+      <Route path="/ui-kit" element={<Navigate to="/ui-kit/primitives" replace />} />
+      <Route path="/ui-kit/primitives" element={<UiKitPrimitivesPage />} />
+      <Route path="/ui-kit/forms" element={<UiKitFormsPage />} />
+      <Route path="/ui-kit/domain" element={<UiKitDomainPage />} />
     </Routes>
   )
 }
