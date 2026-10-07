@@ -14,6 +14,8 @@ import { NewListingPage } from '@/pages/new-listing-page'
 import { ListingDetailPage } from '@/pages/listing-detail-page'
 import { ListingPickupTimesPage } from '@/pages/listing-pickup-times-page'
 import { ListingSaleCompletedPage } from '@/pages/listing-sale-completed-page'
+import { LoginPage } from '@/pages/login-page'
+import { RegisterPage } from '@/pages/register-page'
 import { UiKitPrimitivesPage } from '@/pages/ui-kit/primitives-page'
 import { UiKitFormsPage } from '@/pages/ui-kit/forms-page'
 import { UiKitDomainPage } from '@/pages/ui-kit/domain-page'
@@ -22,6 +24,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/items/:id" element={<ItemDetailPage />} />
       <Route path="/items/:id/pickup" element={<ItemSchedulePickupPage />} />
