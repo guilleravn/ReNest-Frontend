@@ -3,12 +3,16 @@ import { Inbox, Plus, Tags, House } from "lucide-react"
 import { Avatar } from "@/components/ui/avatar"
 import { Badge, VerifiedBadge } from "@/components/ui/badge"
 import { Button, ButtonAnchor, ButtonLink } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Chip, ChipGroup } from "@/components/ui/chip"
 import { CountBadge } from "@/components/ui/count-badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { InfoPanel } from "@/components/ui/info-panel"
+import { Logo } from "@/components/ui/logo"
 import { Eyebrow, PageHeader } from "@/components/ui/page-header"
 import { SegmentedControl, SegmentedItem } from "@/components/ui/segmented-control"
+import { TextLink } from "@/components/ui/text-link"
+import { TrustNote } from "@/components/ui/trust-note"
 import { Demo, Demos, KitLayout, Section, img } from "./kit-layout"
 
 const tones = ["green", "blue", "amber", "verified", "error", "neutral"] as const
@@ -326,6 +330,61 @@ export function UiKitPrimitivesPage() {
               description="Publica tu primer artículo."
               action={<Button size="md">Nuevo artículo</Button>}
             />
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="Card"
+        varies="children, className."
+        fixed="White background, border, 2xl radius, menu shadow, 24px padding."
+      >
+        <Demos cols={2}>
+          <Demo props="children" className="block bg-surface">
+            <Card>
+              <p className="text-sm text-text-muted">Contenido de la tarjeta.</p>
+            </Card>
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="TextLink"
+        varies="to (router link), children."
+        fixed="Green, semibold, underline on hover."
+      >
+        <Demos cols={2}>
+          <Demo props='to="/register"'>
+            <p className="text-sm text-text-muted">
+              ¿No tienes cuenta? <TextLink to="/register">Regístrate</TextLink>
+            </p>
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="Logo"
+        varies="size (header · auth)."
+        fixed="Horizontal ReNest logo with its alt text."
+      >
+        <Demos cols={2}>
+          <Demo props='size="header" (default)'>
+            <Logo />
+          </Demo>
+          <Demo props='size="auth"'>
+            <Logo size="auth" />
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="TrustNote"
+        varies="children."
+        fixed="Shield icon + small muted text."
+      >
+        <Demos cols={2}>
+          <Demo props="children" className="block">
+            <TrustNote>Coordinas la entrega directamente con el vendedor.</TrustNote>
           </Demo>
         </Demos>
       </Section>

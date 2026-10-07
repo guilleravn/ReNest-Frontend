@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/layout/app-header"
+import { AuthLayout } from "@/components/layout/auth-layout"
 import { BottomNav, DesktopNav, defaultNavItems } from "@/components/layout/app-nav"
 import { PageContainer } from "@/components/layout/page-container"
 import { ImageGallery } from "@/components/listing/image-gallery"
@@ -8,6 +9,7 @@ import { ProductCard } from "@/components/listing/product-card"
 import { ProductSummary } from "@/components/listing/product-summary"
 import { SellerCard } from "@/components/listing/seller-card"
 import { Badge } from "@/components/ui/badge"
+import { TextLink } from "@/components/ui/text-link"
 import { Demo, Demos, KitLayout, Section, img } from "./kit-layout"
 
 // Sticky/fixed bars are made static inside demos so they stay in their box.
@@ -321,6 +323,26 @@ export function UiKitDomainPage() {
               </PageContainer>
             </Demo>
           ))}
+        </Demos>
+      </Section>
+
+      <Section
+        name="AuthLayout"
+        varies="children (card content), footer (line under the card)."
+        fixed="Gray background, centered column, auth logo on top, content inside a Card."
+      >
+        <Demos cols={1}>
+          <Demo props="children + footer" className="block p-0 overflow-hidden [&>div]:min-h-0">
+            <AuthLayout
+              footer={
+                <>
+                  ¿No tienes cuenta? <TextLink to="/register">Regístrate</TextLink>
+                </>
+              }
+            >
+              <p className="text-sm text-text-muted">Formulario de inicio de sesión.</p>
+            </AuthLayout>
+          </Demo>
         </Demos>
       </Section>
     </KitLayout>

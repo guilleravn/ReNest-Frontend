@@ -20,7 +20,7 @@ function Input({ className, invalid, type = "text", ...props }: InputProps) {
     <input
       type={type}
       aria-invalid={invalid || undefined}
-      className={cn(fieldClasses, "h-12 min-w-0 px-3.5", fieldStateClasses(invalid), className)}
+      className={cn(fieldClasses, "h-(--size-field) min-w-0 px-3.5", fieldStateClasses(invalid), className)}
       {...props}
     />
   )
@@ -41,5 +41,39 @@ function Textarea({ className, invalid, rows = 4, ...props }: TextareaProps) {
   )
 }
 
-export { Input, Textarea }
-export type { InputProps, TextareaProps }
+type SelectProps = ComponentProps<"select"> & {
+  invalid?: boolean
+  /** Disabled first option shown until the user picks ("Elige tu zona"). */
+  placeholder?: string
+}
+
+/** Native select styled like Input. Children are <option> elements. */
+function Select({
+  className,
+  invalid,
+  placeholder,
+  value,
+  defaultValue,
+  children,
+  ...props
+}: SelectProps) {
+  return (
+    <select
+      aria-invalid={invalid || undefined}
+      value={value}
+      defaultValue={value === undefined && defaultValue === undefined && placeholder ? "" : defaultValue}
+      className={cn(fieldClasses, "h-(--size-field) min-w-0 px-3.5", fieldStateClasses(invalid), className)}
+      {...props}
+    >
+      {placeholder && (
+        <option value="" disabled>
+          {placeholder}
+        </option>
+      )}
+      {children}
+    </select>
+  )
+}
+
+export { Input, Textarea, Select }
+export type { InputProps, TextareaProps, SelectProps }

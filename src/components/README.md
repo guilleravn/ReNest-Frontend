@@ -19,7 +19,8 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `Chip`, `ChipGroup` | Feed filters, category/condition choices, weekdays | `selected`; `variant`: solid · soft; `shape`: pill · square; `size`: sm · md; `count` |
 | `SegmentedControl`, `SegmentedItem` | Tabs like "Agendadas / Completadas" | `active`, `icon`, `trailing`, `to` (link) or `onClick` |
 | `SearchInput` | Feed search box | `value`, `onChange`, `onClear` |
-| `Input`, `Textarea` | Form fields | `invalid` |
+| `Input`, `Textarea`, `Select` | Form fields (`Select` is a native select; children are `<option>`) | `invalid`; `Select`: `placeholder` |
+| `Checkbox`, `CheckboxLink` | Inline checkbox with label; green links inside the label | `checked`, `disabled` |
 | `FormField` | Label + control + hint/error | `label`, `aside` ("Opcional"), `hint`, `error` |
 | `Avatar` | User photo or initial | `name`, `src`, `size`: sm · md · lg · xl |
 | `StepProgress` | "Nuevo artículo · Paso 1 de 2" | `label`, `currentStep`, `totalSteps` |
@@ -27,6 +28,11 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `StarRating` | Seller rating | `value`, `onChange` |
 | `EmptyState` | Empty list or search | `title`, `description`, `icon`, `action` |
 | `PageHeader`, `Eyebrow` | Overline + serif title + description; small label inside cards | `overline`, `title`, `description`, `align` |
+| `TrustNote` | Shield + small reassurance line ("Coordinas la entrega…") | `children` |
+| `Card` | White bordered container with shadow | `className` |
+| `TextLink` | Inline brand link ("Regístrate") | router `to` |
+| `Logo` | Horizontal ReNest logo | `size`: header · auth |
+| `Toast`, `ToastViewport` | Short feedback ("Sesión cerrada") | `tone`: success · error; `onDismiss` |
 | `InfoPanel` | Gray summary box ("Vendido a …") | `title`, `children` |
 | `StickyActionBar` | Fixed bottom bar with the page's main action | `width`: narrow · wide; `note` |
 | `FloatingActionButton` | "+ Nuevo artículo" | `to`, `icon` |
@@ -40,6 +46,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | --- | --- | --- |
 | `AppHeader` | Top bar: logo, "Mis compras", account menu | `user`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
+| `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
 | `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · none |
 
 Pages with `BottomNav` use `<AppHeader bordered={false} />` + `<DesktopNav />` + `<PageContainer bottomSpace="nav">`.
