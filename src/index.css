@@ -23,6 +23,18 @@
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
 
+    /* Typography — sizes outside Tailwind's default scale */
+    --font-size-button: 0.95rem; /* primary/outline buttons */
+    --font-size-label: 0.7rem;   /* small uppercase labels, bottom-nav labels */
+    --font-size-badge: 0.65rem;  /* small pills, status labels, counters */
+    --font-size-count: 0.6rem;   /* counter inside a chip or nav icon */
+
+    /* Typography — letter spacing */
+    --tracking-overline: 0.08em;
+
+    /* Borders */
+    --border-width-field: 1.5px; /* inputs, outline buttons */
+
     /* Neutral surfaces */
     --color-base-background: #ffffff;
     --color-base-surface: #fafaf9;
@@ -98,6 +110,12 @@
     --font-heading: var(--font-heading);
     --font-mono: var(--font-mono);
 
+    --text-button: var(--font-size-button);
+    --text-label: var(--font-size-label);
+    --text-badge: var(--font-size-badge);
+    --text-count: var(--font-size-count);
+    --tracking-overline: var(--tracking-overline);
+
     --color-sidebar-ring: var(--color-focus);
     --color-sidebar-border: var(--color-base-border);
     --color-sidebar-accent-foreground: var(--color-base-text);
@@ -127,10 +145,48 @@
     --color-foreground: var(--color-base-text);
     --color-background: var(--color-base-background);
 
+    /* App-specific utilities (bg-surface, text-text-muted, bg-green-strong, ...)
+       so components reference the design tokens above, never raw values. */
+    --color-surface: var(--color-base-surface);
+    --color-surface-sunken: var(--color-base-surface-sunken);
+    --color-border-strong: var(--color-base-border-strong);
+    --color-text-muted: var(--color-base-text-muted);
+    --color-text-subtle: var(--color-base-text-subtle);
+    --color-text-inverse: var(--color-base-text-inverse);
+
+    --color-green: var(--color-green);
+    --color-green-strong: var(--color-green-strong);
+    --color-green-hover: var(--color-green-hover);
+    --color-green-active: var(--color-green-active);
+    --color-green-surface: var(--color-green-surface);
+    --color-blue: var(--color-blue);
+    --color-blue-strong: var(--color-blue-strong);
+    --color-blue-surface: var(--color-blue-surface);
+    --color-amber: var(--color-amber);
+    --color-amber-strong: var(--color-amber-strong);
+    --color-amber-surface: var(--color-amber-surface);
+
+    --color-success: var(--color-success);
+    --color-success-surface: var(--color-success-surface);
+    --color-warning: var(--color-warning);
+    --color-warning-surface: var(--color-warning-surface);
+    --color-error: var(--color-error);
+    --color-error-surface: var(--color-error-surface);
+    --color-info: var(--color-info);
+    --color-info-surface: var(--color-info-surface);
+
+    --color-verified: var(--color-verified);
+    --color-verified-surface: var(--color-verified-surface);
+    --color-protected: var(--color-protected);
+    --color-protected-surface: var(--color-protected-surface);
+    --color-price: var(--color-price);
+    --color-price-reduced: var(--color-price-reduced);
+
     --radius-sm: calc(var(--radius-base) - 4px);
     --radius-md: calc(var(--radius-base) - 2px);
     --radius-lg: var(--radius-base);
     --radius-xl: calc(var(--radius-base) + 4px);
+    --radius-2xl: calc(var(--radius-base) + 8px);
     --radius-sheet: var(--radius-sheet);
 
     --shadow-card: var(--shadow-card);
@@ -148,4 +204,33 @@
   html {
     @apply font-sans;
     }
+  body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Section titles use the serif heading font; override with font-sans where needed. */
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    letter-spacing: -0.013em;
+  }
+}
+
+/* Small uppercase label above titles ("MUEBLES", "AGENDAR RECOGIDA"). */
+@utility text-overline {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+}
+
+/* Prices ("$185"). Pair with a text-size utility and text-price. */
+@utility price-text {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.01em;
 }

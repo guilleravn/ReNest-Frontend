@@ -1,57 +1,88 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button"
+import type { ComponentProps } from "react"
+import { Link, type LinkProps } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-60 aria-disabled:pointer-events-none aria-disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        /** Main call to action ("Agendar recogida", "Continuar"). */
+        primary:
+          "bg-green-strong text-text-inverse hover:bg-green-hover active:bg-green-active",
+        /** Secondary action in brand color ("¿Preguntas sobre este producto?"). */
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-(length:--border-width-field) border-green-strong bg-transparent text-green-strong hover:bg-green-surface",
+        /** Neutral bordered action ("Mapa"). */
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-(length:--border-width-field) border-border bg-card text-foreground hover:bg-muted",
+        /** Low emphasis ("Cancelar", "Ahora no"). */
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent text-text-muted hover:bg-muted hover:text-foreground",
       },
       size: {
-        default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8",
-        "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-9",
+        lg: "h-12 px-5 text-button",
+        md: "h-11 px-3 text-sm",
+      },
+      fullWidth: {
+        true: "w-full",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: "primary",
+      size: "lg",
     },
   }
 )
 
+type ButtonVariantProps = VariantProps<typeof buttonVariants>
+
+type ButtonProps = ComponentProps<"button"> & ButtonVariantProps
+
 function Button({
   className,
-  variant = "default",
-  size = "default",
+  variant,
+  size,
+  fullWidth,
+  type = "button",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
   return (
-    <ButtonPrimitive
+    <button
+      type={type}
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, fullWidth }), className)}
       {...props}
     />
   )
 }
 
-export { Button, buttonVariants }
+type ButtonLinkProps = LinkProps & ButtonVariantProps
+
+/** Same look as Button, rendered as an in-app router link. */
+function ButtonLink({ className, variant, size, fullWidth, ...props }: ButtonLinkProps) {
+  return (
+    <Link
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, fullWidth }), className)}
+      {...props}
+    />
+  )
+}
+
+type ButtonAnchorProps = ComponentProps<"a"> & ButtonVariantProps
+
+/** Same look as Button, rendered as an external link (WhatsApp, Maps). */
+function ButtonAnchor({ className, variant, size, fullWidth, ...props }: ButtonAnchorProps) {
+  return (
+    <a
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, fullWidth }), className)}
+      {...props}
+    />
+  )
+}
+
+export { Button, ButtonLink, ButtonAnchor, buttonVariants }
+export type { ButtonProps, ButtonLinkProps, ButtonAnchorProps }
