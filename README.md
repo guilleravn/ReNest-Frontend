@@ -31,6 +31,10 @@ npm run dev
 
 The app runs at `http://localhost:5173`.
 
+### Environment
+
+No `.env` is needed for local development: the app calls `/api/v1` and the Vite dev server proxies `/api` to the backend at `http://localhost:3000`. To point at another API, set `VITE_API_URL` (for example `https://api.example.com/api/v1`) in `.env.local`. See [.env.example](.env.example).
+
 ## Scripts
 
 | Script | Purpose |
