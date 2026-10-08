@@ -35,11 +35,15 @@ async function mockReservation(page: Page, detail: object = reservationDetail) {
   )
 }
 
-/** Answers POST …/reception with `status`/`json` and records the bodies sent. */
+/**
+ * Answers POST …/reception with `status`/`json` and records the bodies sent.
+ * Once confirmed, the purchase loads as received, so the rating step opens.
+ */
 async function mockReception(page: Page, status = 200, json: object = received) {
   const bodies: unknown[] = []
-  await page.route(RECEPTION_URL, (route) => {
+  await page.route(RECEPTION_URL, async (route) => {
     bodies.push(route.request().postDataJSON())
+    if (status === 200) await mockReservation(page, json)
     return route.fulfill({ status, json })
   })
   return bodies

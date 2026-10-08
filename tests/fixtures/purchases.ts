@@ -89,3 +89,10 @@ export const receptionAlreadyConfirmedError = {
   message: 'The reception was already confirmed.',
   details: null,
 }
+
+export const alreadyRatedError = {
+  statusCode: 409,
+  code: 'ALREADY_RATED',
+  message: 'The seller was already rated for this purchase.',
+  details: null,
+}
