@@ -11,10 +11,13 @@ export const DESCRIPTION_MAX = 2000
 export const PRICE_MIN = 1
 export const PRICE_MAX = 20_000_000
 
+/** A photo in the form: one the listing already has (editing), or a new upload. */
+export type FormPhoto = { photoId: string; url: string } | UploadedPhoto
+
 /** Step 1 of a new listing; also the shape an edit form starts from. */
 export interface ListingDetailsValues {
   /** In order; the first is the cover. */
-  photos: UploadedPhoto[]
+  photos: FormPhoto[]
   title: string
   categoryId: string
   condition: ListingCondition | ''
@@ -141,7 +144,8 @@ export function toNewListing(
     description: details.description.trim(),
     condition: details.condition as ListingCondition,
     priceCents: priceToCents(details.price) ?? 0,
-    photoKeys: details.photos.map((photo) => photo.storageKey),
+    // A new listing only has new uploads.
+    photoKeys: details.photos.flatMap((photo) => ('storageKey' in photo ? [photo.storageKey] : [])),
     pickupOptions,
   }
 }
