@@ -104,3 +104,23 @@ export function getFeed({ q, category, cursor }: FeedQuery = {}): Promise<FeedPa
 export function getCategories(): Promise<Category[]> {
   return api<Category[]>('/categories')
 }
+
+/** The reservation behind a Pending or Completed listing. No buyer phone here. */
+export interface SaleReservation {
+  id: string
+  reservedAt: string
+  sellerHandedOverAt: string | null
+  buyer: { id: string; fullName: string }
+  pickupOption: PickupOption
+}
+
+export interface MyListing {
+  listing: ListingCard
+  /** Null on ACTIVE. */
+  reservation: SaleReservation | null
+}
+
+/** Seller tabs, newest first (SAL-1). */
+export function getMyListings(status: ListingStatus): Promise<MyListing[]> {
+  return api<MyListing[]>(`/me/listings?status=${status}`)
+}

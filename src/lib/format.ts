@@ -73,3 +73,10 @@ export function formatSellerRating({ average, count }: { average: number | null;
   if (average === null) return { rating: 'Sin calificaciones aún' }
   return { rating: formatRating(average), reviews: formatReviewCount(count) }
 }
+
+const dateFormat = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/** ISO timestamp → "3 de octubre de 2026", in the viewer's local time. */
+export function formatDate(iso: string): string {
+  return dateFormat.format(new Date(iso))
+}

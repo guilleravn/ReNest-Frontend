@@ -70,3 +70,10 @@ export const internalError = {
   message: 'Internal server error',
   details: null,
 }
+
+/** The same listing as its seller sees it (opened from My Listings). */
+export const ownListingDetail: ListingDetailFixture = {
+  ...listingDetail,
+  seller: { ...listingDetail.seller, phoneE164: '+525512345678' },
+  viewer: { isSeller: true, canReserve: false, canEdit: true },
+}
