@@ -45,7 +45,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | Component | Used for | Key props |
 | --- | --- | --- |
 | `AppHeader` | Top bar: logo, "Mis compras", account menu | `user`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
-| `DesktopNav`, `BottomNav` | Inicio / Mis artículos tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
+| `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
 | `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · none |
 

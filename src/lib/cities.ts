@@ -6,3 +6,7 @@ export const CITY_OPTIONS: { value: City; label: string }[] = [
   { value: 'SAN_SALVADOR_SV', label: 'San Salvador, SV' },
   { value: 'UTAH_US', label: 'Utah, US' },
 ]
+
+export function cityLabel(city: City): string {
+  return CITY_OPTIONS.find(({ value }) => value === city)?.label ?? city
+}

@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import { setToken } from '@/lib/session'
+import { clearToken, setToken } from '@/lib/session'
 
 export type City =
   | 'COCHABAMBA_BO'
@@ -47,4 +47,13 @@ export function login(email: string, password: string): Promise<AuthResponse> {
 
 export function register(input: RegisterInput): Promise<AuthResponse> {
   return authenticate('/auth/register', input)
+}
+
+export function getMe(): Promise<Me> {
+  return api<Me>('/me')
+}
+
+/** There is no logout endpoint: the client just discards the token. */
+export function logout(): void {
+  clearToken()
 }

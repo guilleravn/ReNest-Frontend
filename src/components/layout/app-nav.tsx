@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { House, Tags } from "lucide-react"
+import { House, Tags, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CountBadge } from "@/components/ui/count-badge"
 import { SegmentedControl, SegmentedItem } from "@/components/ui/segmented-control"
@@ -16,7 +16,7 @@ type NavItem = {
 type AppNavProps = {
   /** Path of the active item. */
   activeTo: string
-  /** Defaults to Inicio + Mis artículos. */
+  /** Defaults to Inicio + Mis artículos + Cuenta. */
   items?: NavItem[]
 }
 
@@ -24,6 +24,7 @@ function defaultNavItems(listingsCount?: number): NavItem[] {
   return [
     { label: "Inicio", to: "/feed", icon: <House aria-hidden /> },
     { label: "Mis artículos", to: "/listings", icon: <Tags aria-hidden />, count: listingsCount },
+    { label: "Cuenta", to: "/account", icon: <UserRound aria-hidden /> },
   ]
 }
 
