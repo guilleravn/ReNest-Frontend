@@ -317,7 +317,7 @@ export function UiKitFormsPage() {
 
       <Section
         name="ConfirmDialog"
-        varies="title, description, confirmLabel, cancelLabel, children (extra content)."
+        varies="title, description, confirmLabel, cancelLabel, children (extra content), pending (confirm disabled while the action runs)."
         fixed="Slides up on mobile, centered on desktop; primary button + ghost cancel button."
       >
         <Demos cols={3}>

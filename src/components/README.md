@@ -38,7 +38,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `StickyActionBar` | Fixed bottom bar with the page's main action | `width`: narrow · wide; `note` |
 | `FloatingActionButton` | "+ Nuevo artículo" | `to`, `icon` |
 | `Sheet` | Form panel: bottom sheet on mobile, right drawer on desktop | `open`, `onOpenChange`, `title`, `description`, `footer` |
-| `ConfirmDialog` | "¿Confirmar la entrega?" | `open`, `title`, `description`, `confirmLabel`, `cancelLabel`, `onConfirm` |
+| `ConfirmDialog` | "¿Confirmar la entrega?" | `open`, `title`, `description`, `confirmLabel`, `cancelLabel`, `onConfirm`, `pending` (disables confirm while it runs) |
 | `DropdownMenu*` | Menus (shadcn, base-nova style) | See shadcn docs |
 
 ## `layout/`

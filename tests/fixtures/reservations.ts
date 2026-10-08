@@ -1,4 +1,5 @@
-// GET /reservations/:reservationId payloads (API contract §2, ReservationDetail).
+// GET /reservations/:reservationId and POST /reservations payloads (API contract §2, ReservationDetail).
+import { listingDetailForBuyer } from './listings'
 
 const PHOTO =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
@@ -55,5 +56,67 @@ export const reservationNotFoundError = {
   statusCode: 404,
   code: 'RESERVATION_NOT_FOUND',
   message: 'Reservation not found.',
+  details: null,
+}
+
+const [, plaza] = listingDetailForBuyer.pickupOptions
+
+/** The buyer's new reservation of `listingDetailForBuyer` at "Plaza Principal" (POST /reservations). */
+export const reservationDetail = {
+  id: '0192d3a4-0000-7000-8000-0000000000f2',
+  viewerRole: 'BUYER',
+  reservedAt: '2026-10-08T15:04:05.000Z',
+  sellerHandedOverAt: null,
+  buyerReceivedAt: null,
+  listing: {
+    id: listingDetailForBuyer.id,
+    title: listingDetailForBuyer.title,
+    priceCents: listingDetailForBuyer.priceCents,
+    condition: listingDetailForBuyer.condition,
+    category: listingDetailForBuyer.category,
+    status: 'PENDING',
+    coverPhotoUrl: listingDetailForBuyer.photos[0].url,
+    city: listingDetailForBuyer.seller.city,
+    sellerIsVerified: true,
+    publishedAt: listingDetailForBuyer.publishedAt,
+  },
+  pickupOption: plaza,
+  counterpart: {
+    id: listingDetailForBuyer.seller.id,
+    fullName: 'Priya Mehta',
+    avatarUrl: null,
+    phoneE164: '+525512345678',
+    isVerified: true,
+  },
+  receptionChecklist: null,
+  rating: null,
+  actions: { canConfirmHandover: false, canConfirmReception: true, canRate: false },
+}
+
+export const listingNotAvailableError = {
+  statusCode: 409,
+  code: 'LISTING_NOT_AVAILABLE',
+  message: 'This listing was already reserved.',
+  details: null,
+}
+
+export const invalidPickupOptionError = {
+  statusCode: 422,
+  code: 'INVALID_PICKUP_OPTION',
+  message: 'The pickup option does not belong to this listing.',
+  details: null,
+}
+
+export const cannotReserveOwnListingError = {
+  statusCode: 403,
+  code: 'CANNOT_RESERVE_OWN_LISTING',
+  message: 'You cannot reserve your own listing.',
+  details: null,
+}
+
+export const unauthorizedError = {
+  statusCode: 401,
+  code: 'UNAUTHORIZED',
+  message: 'Missing, invalid or expired token.',
   details: null,
 }

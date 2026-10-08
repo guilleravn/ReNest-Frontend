@@ -4,6 +4,11 @@ export function whatsappHref(phoneE164: string, message?: string): string {
   return message ? `${url}?text=${encodeURIComponent(message)}` : url
 }
 
+/** Buyer's first message after reserving: the exact day is agreed on WhatsApp (RES-2). */
+export function pickupMessage(sellerName: string, title: string, place: string): string {
+  return `Hola ${sellerName}, reservé tu "${title}" en ReNest. ¿Qué día te queda bien para la recogida en ${place}?`
+}
+
 /** Buyer's first message about a listing (BRW-7). `price` is already formatted. */
 export function listingQuestionMessage(sellerName: string, title: string, price: string): string {
   return `Hola ${sellerName}, vi tu "${title}" (${price}) en ReNest y tengo una pregunta.`
