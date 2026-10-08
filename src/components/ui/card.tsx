@@ -1,0 +1,14 @@
+import type { ComponentProps } from "react"
+import { cn } from "@/lib/utils"
+
+/** White bordered container with a soft shadow (login form, summaries). */
+function Card({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      className={cn("rounded-2xl border border-border bg-card p-6 shadow-menu", className)}
+      {...props}
+    />
+  )
+}
+
+export { Card }

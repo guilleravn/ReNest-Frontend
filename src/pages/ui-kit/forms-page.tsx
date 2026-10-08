@@ -3,17 +3,19 @@ import { Plus } from "lucide-react"
 import { PhotoUploader } from "@/components/listing/photo-uploader"
 import { PickupSlotItem, PickupSlotList } from "@/components/listing/pickup-slot-item"
 import { Button } from "@/components/ui/button"
+import { Checkbox, CheckboxLink } from "@/components/ui/checkbox"
 import { Chip, ChipGroup } from "@/components/ui/chip"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { FloatingActionButton } from "@/components/ui/floating-action-button"
 import { FormField } from "@/components/ui/form-field"
-import { Input, Textarea } from "@/components/ui/input"
+import { Input, Select, Textarea } from "@/components/ui/input"
 import { OptionCard, OptionCardGroup } from "@/components/ui/option-card"
 import { SearchInput } from "@/components/ui/search-input"
 import { Sheet } from "@/components/ui/sheet"
 import { StarRating } from "@/components/ui/star-rating"
 import { StepProgress } from "@/components/ui/step-progress"
 import { StickyActionBar } from "@/components/ui/sticky-action-bar"
+import { Toast } from "@/components/ui/toast"
 import { Demo, Demos, KitLayout, Section, img } from "./kit-layout"
 
 type BarMode = "off" | "narrow" | "wide" | "note"
@@ -84,6 +86,51 @@ export function UiKitFormsPage() {
           </Demo>
           <Demo props="<Textarea invalid />" className="block">
             <Textarea invalid rows={3} />
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="Select"
+        varies="placeholder (disabled first option until the user picks), invalid, disabled, children (<option>)."
+        fixed="Native select styled like Input: same height, border and focus ring."
+      >
+        <Demos cols={3}>
+          <Demo props='placeholder="Elige tu zona"' className="block">
+            <Select placeholder="Elige tu zona" aria-label="Zona">
+              <option value="COCHABAMBA_BO">Cochabamba, BO</option>
+              <option value="AREQUIPA_PE">Arequipa, PE</option>
+            </Select>
+          </Demo>
+          <Demo props="invalid" className="block">
+            <Select invalid placeholder="Elige tu zona" aria-label="Zona inválida">
+              <option value="COCHABAMBA_BO">Cochabamba, BO</option>
+            </Select>
+          </Demo>
+          <Demo props="disabled" className="block">
+            <Select disabled defaultValue="AREQUIPA_PE" aria-label="Zona fija">
+              <option value="AREQUIPA_PE">Arequipa, PE</option>
+            </Select>
+          </Demo>
+        </Demos>
+      </Section>
+
+      <Section
+        name="Checkbox / CheckboxLink"
+        varies="checked, disabled, children (label; may contain CheckboxLink)."
+        fixed="Square box left of the label; CheckboxLink is green."
+      >
+        <Demos cols={3}>
+          <Demo props="children" className="block">
+            <Checkbox>Recordarme</Checkbox>
+          </Demo>
+          <Demo props="defaultChecked + CheckboxLink" className="block">
+            <Checkbox defaultChecked>
+              Acepto los <CheckboxLink href="#">Términos</CheckboxLink>.
+            </Checkbox>
+          </Demo>
+          <Demo props="disabled" className="block">
+            <Checkbox disabled>No disponible</Checkbox>
           </Demo>
         </Demos>
       </Section>
@@ -399,6 +446,23 @@ export function UiKitFormsPage() {
           Nuevo artículo
         </FloatingActionButton>
       )}
+
+      <Section
+        name="Toast / ToastViewport"
+        varies="tone (success · error), onDismiss (shows the ×)."
+        fixed="Icon, short bold text. In pages, place it inside ToastViewport (fixed at the bottom)."
+      >
+        <Demos cols={2}>
+          <Demo props='tone="success"' className="block">
+            <Toast>Sesión cerrada</Toast>
+          </Demo>
+          <Demo props='tone="error" + onDismiss' className="block">
+            <Toast tone="error" onDismiss={() => {}}>
+              Correo o contraseña incorrectos
+            </Toast>
+          </Demo>
+        </Demos>
+      </Section>
     </KitLayout>
   )
 }
