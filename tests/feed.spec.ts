@@ -1,5 +1,12 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
-import { categories, feedPage, internalError, lampCard, sideboardCard } from './fixtures/feed'
+import {
+  cards,
+  categories,
+  feedPage,
+  internalError,
+  lampCard,
+  sideboardCard,
+} from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -94,4 +101,58 @@ test('shows an error with a retry when the listings fail to load', async ({ page
   await page.getByRole('button', { name: 'Reintentar' }).click()
 
   await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+})
+
+test('"Cargar más" appends the next page of 20 and disappears on the last page (BRW-10)', async ({ page }) => {
+  const cursors: (string | null)[] = []
+  await mockFeed(page, (url, route) => {
+    const cursor = url.searchParams.get('cursor')
+    cursors.push(cursor)
+    return route.fulfill({
+      json: cursor === 'page-2' ? feedPage(cards(3, 21)) : feedPage(cards(20), 'page-2'),
+    })
+  })
+
+  await page.goto('/feed')
+  const cards_ = page.getByRole('main').getByRole('listitem')
+  await expect(cards_).toHaveCount(20)
+  await page.getByRole('button', { name: 'Cargar más' }).click()
+
+  await expect(cards_).toHaveCount(23)
+  await expect(cards_.nth(0)).toContainText('Artículo 1')
+  await expect(cards_.nth(22)).toContainText('Artículo 23')
+  await expect(page.getByRole('button', { name: 'Cargar más' })).toHaveCount(0)
+  expect(cursors.at(-1)).toBe('page-2')
+})
+
+test('hides "Cargar más" when everything fits in one page (BRW-10)', async ({ page }) => {
+  await mockFeed(page, (_, route) => route.fulfill({ json: feedPage([sideboardCard]) }))
+
+  await page.goto('/feed')
+
+  await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Cargar más' })).toHaveCount(0)
+})
+
+test('keeps the loaded listings and lets me retry when "Cargar más" fails (BRW-10)', async ({ page }) => {
+  let failing = true
+  await mockFeed(page, (url, route) => {
+    if (!url.searchParams.has('cursor')) {
+      return route.fulfill({ json: feedPage(cards(20), 'page-2') })
+    }
+    return failing
+      ? route.fulfill({ status: 500, json: internalError })
+      : route.fulfill({ json: feedPage(cards(1, 21)) })
+  })
+
+  await page.goto('/feed')
+  await page.getByRole('button', { name: 'Cargar más' }).click()
+  const cards_ = page.getByRole('main').getByRole('listitem')
+
+  await expect(page.getByRole('alert')).toHaveText('No pudimos cargar más artículos. Inténtalo de nuevo.')
+  await expect(cards_).toHaveCount(20)
+  failing = false
+  await page.getByRole('button', { name: 'Cargar más' }).click()
+  await expect(cards_).toHaveCount(21)
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
