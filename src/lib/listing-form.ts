@@ -1,4 +1,4 @@
-import type { ListingCondition, UploadedPhoto, Weekday } from '@/lib/listings'
+import type { ListingCondition, NewListing, UploadedPhoto, Weekday } from '@/lib/listings'
 
 // UX mirror of the publish rules (LST-1..5, GEN-2). The API enforces them.
 export const MAX_PHOTOS = 3
@@ -128,4 +128,34 @@ export function normalizePickupOption(draft: PickupOptionDraft): PickupOptionDra
     locationLabel: draft.locationLabel.trim(),
     weekdays: WEEKDAYS.filter((day) => draft.weekdays.includes(day)),
   }
+}
+
+/** The POST /listings body; call it once both steps are valid. */
+export function toNewListing(
+  details: ListingDetailsValues,
+  pickupOptions: PickupOptionDraft[],
+): NewListing {
+  return {
+    categoryId: details.categoryId,
+    title: details.title.trim(),
+    description: details.description.trim(),
+    condition: details.condition as ListingCondition,
+    priceCents: priceToCents(details.price) ?? 0,
+    photoKeys: details.photos.map((photo) => photo.storageKey),
+    pickupOptions,
+  }
+}
+
+const API_DETAILS_FIELDS: Record<string, ListingDetailsField> = {
+  categoryId: 'categoryId',
+  title: 'title',
+  description: 'description',
+  condition: 'condition',
+  priceCents: 'price',
+  photoKeys: 'photos',
+}
+
+/** The step 1 field an API `details[].field` points to ("photoKeys[1]" → photos), if any. */
+export function detailsFieldOf(apiField: string): ListingDetailsField | null {
+  return API_DETAILS_FIELDS[apiField.split(/[.[]/)[0]] ?? null
 }

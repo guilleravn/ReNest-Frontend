@@ -1,7 +1,19 @@
 import { expect, test, type Page } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
 import { categories, internalError } from './fixtures/feed'
-import { invalidFileError, photoFile, uploadedPhoto } from './fixtures/new-listing'
+import {
+  categoryNotFoundError,
+  invalidFileError,
+  invalidPhotoKeyError,
+  listingNotFoundError,
+  NEW_LISTING_ID,
+  photoFile,
+  publishedItem,
+  publishedListing,
+  titleValidationError,
+  unauthorizedError,
+  uploadedPhoto,
+} from './fixtures/new-listing'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -283,4 +295,167 @@ test('keeps the details when going back to step 1 (LST-9)', async ({ page }) => 
 
   await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
   await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
+})
+
+/** Answers POST /listings with `response` and keeps the bodies it got. */
+async function mockPublish(page: Page, response: { status: number; json: unknown }) {
+  const bodies: unknown[] = []
+  await page.route('**/api/v1/listings', (route) => {
+    if (route.request().method() !== 'POST') return route.fallback()
+    bodies.push(route.request().postDataJSON())
+    return route.fulfill(response)
+  })
+  return bodies
+}
+
+async function confirmPublish(page: Page) {
+  await page.getByRole('button', { name: 'Publicar artículo' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Publicar tu artículo?' })
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Sí, publicar' }).click()
+}
+
+test('can’t publish without a pickup pair (LST-6)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await expect(page.getByRole('button', { name: 'Publicar artículo' })).toBeDisabled()
+  await expect(page.getByText('Agrega al menos una opción de entrega para publicar.')).toBeVisible()
+})
+
+test('asks for confirmation and publishes nothing when the seller goes back to review (LST-10)', async ({ page }) => {
+  await goToPickupStep(page)
+  const bodies = await mockPublish(page, { status: 201, json: publishedListing })
+  await addPickupOption(page)
+
+  await page.getByRole('button', { name: 'Publicar artículo' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Revisar' }).click()
+
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(bodies).toHaveLength(0)
+})
+
+test('publishes everything in one request, lands on "Artículo publicado" and finds it in My Listings (LST-1, LST-10, GEN-2)', async ({ page }) => {
+  await goToPickupStep(page)
+  const bodies = await mockPublish(page, { status: 201, json: publishedListing })
+  await page.route(`**/api/v1/listings/${NEW_LISTING_ID}`, (route) =>
+    route.fulfill({ status: 200, json: publishedListing }),
+  )
+  await page.route('**/api/v1/me/listings?*', (route) =>
+    route.fulfill({ status: 200, json: [publishedItem] }),
+  )
+  await addPickupOption(page, { place: '  Plaza Principal  ', days: ['Mié', 'Lun'] })
+
+  await confirmPublish(page)
+
+  await expect(page).toHaveURL(`/listings/${NEW_LISTING_ID}/published`)
+  await expect(page.getByRole('heading', { name: '¡Artículo publicado!' })).toBeVisible()
+  await expect(page.getByText('Muebles · Poco uso')).toBeVisible()
+  expect(bodies).toEqual([
+    {
+      categoryId: '0192d3a4-0000-7000-8000-0000000000c1',
+      title: 'Silla de comedor en roble',
+      description: 'Roble macizo, sin rayones.',
+      condition: 'GENTLY_USED',
+      priceCents: 18000,
+      photoKeys: [uploadedPhoto(1).storageKey, uploadedPhoto(2).storageKey],
+      pickupOptions: [
+        {
+          locationLabel: 'Plaza Principal',
+          weekdays: ['MONDAY', 'WEDNESDAY'],
+          startTime: '18:30',
+          endTime: '20:00',
+        },
+      ],
+    },
+  ])
+
+  await page.getByRole('link', { name: 'Ir a Mis artículos' }).click()
+
+  await expect(page).toHaveURL('/listings?status=ACTIVE')
+  await expect(page.getByRole('link', { name: /Silla de comedor en roble/ })).toBeVisible()
+})
+
+test('sends the seller back to the category when it no longer exists (LST-1)', async ({ page }) => {
+  await goToPickupStep(page)
+  await mockPublish(page, { status: 422, json: categoryNotFoundError })
+  await addPickupOption(page)
+
+  await confirmPublish(page)
+
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByText('Esta categoría ya no existe. Elige otra.')).toBeVisible()
+  await expect(page).toHaveURL('/listings/new')
+})
+
+test('asks to upload the photos again when the API rejects their keys (LST-10)', async ({ page }) => {
+  await goToPickupStep(page)
+  await mockPublish(page, { status: 422, json: invalidPhotoKeyError })
+  await addPickupOption(page)
+
+  await confirmPublish(page)
+
+  await expect(page.getByText('Vuelve a subir las fotos.')).toBeVisible()
+  await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(0)
+})
+
+test('marks the field the API rejected inline (LST-3)', async ({ page }) => {
+  await goToPickupStep(page)
+  await mockPublish(page, { status: 400, json: titleValidationError })
+  await addPickupOption(page)
+
+  await confirmPublish(page)
+
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByText('Revisa este dato.')).toBeVisible()
+})
+
+test('keeps the form and explains when publishing fails (LST-10)', async ({ page }) => {
+  await goToPickupStep(page)
+  await mockPublish(page, { status: 500, json: internalError })
+  await addPickupOption(page)
+
+  await confirmPublish(page)
+
+  await expect(page.getByText('No pudimos publicar tu artículo. Inténtalo de nuevo.')).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Publicar artículo' })).toBeEnabled()
+})
+
+test('sends the seller to log in when the session expired while publishing', async ({ page }) => {
+  await goToPickupStep(page)
+  await mockPublish(page, { status: 401, json: unauthorizedError })
+  await addPickupOption(page)
+
+  await confirmPublish(page)
+
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('the published page shows an error with a retry', async ({ page }) => {
+  await logIn(page)
+  let failing = true
+  await page.route(`**/api/v1/listings/${NEW_LISTING_ID}`, (route) =>
+    failing
+      ? route.fulfill({ status: 500, json: internalError })
+      : route.fulfill({ status: 200, json: publishedListing }),
+  )
+
+  await page.goto(`/listings/${NEW_LISTING_ID}/published`)
+  await expect(page.getByText('No pudimos cargar tu artículo')).toBeVisible()
+  failing = false
+  await page.getByRole('button', { name: 'Reintentar' }).click()
+
+  await expect(page.getByRole('heading', { name: '¡Artículo publicado!' })).toBeVisible()
+})
+
+test('the published page shows not-found for an unknown listing', async ({ page }) => {
+  await logIn(page)
+  await page.route(`**/api/v1/listings/${NEW_LISTING_ID}`, (route) =>
+    route.fulfill({ status: 404, json: listingNotFoundError }),
+  )
+
+  await page.goto(`/listings/${NEW_LISTING_ID}/published`)
+
+  await expect(page.getByText('Este artículo no existe')).toBeVisible()
 })

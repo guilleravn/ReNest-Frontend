@@ -137,3 +137,23 @@ export function uploadPhoto(file: File): Promise<UploadedPhoto> {
   body.append('file', file)
   return api<UploadedPhoto>('/uploads/photos', { method: 'POST', body })
 }
+
+/** POST /listings body (API contract §5). */
+export interface NewListing {
+  categoryId: string
+  title: string
+  description: string
+  condition: ListingCondition
+  priceCents: number
+  /** In order; the first is the cover. */
+  photoKeys: string[]
+  pickupOptions: Omit<PickupOption, 'id'>[]
+}
+
+/**
+ * Publishes the listing, its photos and its pickup pairs in one transaction
+ * (LST-10). Errors: 400 VALIDATION_ERROR, 422 CATEGORY_NOT_FOUND, 422 INVALID_PHOTO_KEY.
+ */
+export function createListing(listing: NewListing): Promise<ListingDetail> {
+  return api<ListingDetail>('/listings', { method: 'POST', body: listing })
+}
