@@ -28,7 +28,7 @@ test('returns to the reservation after signing up from the login screen', async 
   await page.getByLabel('Nombre').fill('Laura Gómez')
   await page.getByLabel('Correo').fill('laura@example.com')
   await page.getByLabel('Tu zona').selectOption({ label: 'Cochabamba, BO' })
-  await page.getByLabel('Teléfono').fill('+525512345678')
+  await page.getByLabel('Teléfono').fill('71234567')
   await page.getByLabel('Contraseña').fill('password123')
   await page.getByRole('button', { name: 'Crear cuenta' }).click()
 

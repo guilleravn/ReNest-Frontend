@@ -3,7 +3,7 @@ import { authResponse, emailTakenError, validationError } from './fixtures/auth'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
-async function fillForm(page: Page, { phone = '+525512345678' } = {}) {
+async function fillForm(page: Page, { phone = '71234567' } = {}) {
   await page.getByLabel('Nombre').fill('Laura Gómez')
   await page.getByLabel('Correo').fill('laura@example.com')
   await page.getByLabel('Tu zona').selectOption({ label: 'Cochabamba, BO' })
@@ -25,7 +25,7 @@ test('registers, stores the token and lands on the feed', async ({ page }) => {
   expect(body).toEqual({
     fullName: 'Laura Gómez',
     email: 'laura@example.com',
-    phoneE164: '+525512345678',
+    phoneE164: '+59171234567',
     password: 'password123',
     city: 'COCHABAMBA_BO',
   })
@@ -67,9 +67,7 @@ test('shows each rejected field under its input', async ({ page }) => {
   await page.goto('/register')
   await fillForm(page)
 
-  await expect(
-    page.getByText('Usa el formato internacional, por ejemplo +59171234567'),
-  ).toBeVisible()
+  await expect(page.getByText('El teléfono no es válido para el país elegido')).toBeVisible()
   await expect(
     page.getByText('La contraseña debe tener entre 8 y 72 caracteres'),
   ).toBeVisible()
@@ -77,18 +75,57 @@ test('shows each rejected field under its input', async ({ page }) => {
   await expect(page).toHaveURL(/\/register$/)
 })
 
-test('does not send a phone outside the international format', async ({ page }) => {
+test('prefixes the phone with the calling code of the chosen zone', async ({ page }) => {
+  let body: { phoneE164?: string } = {}
+  await page.route('**/api/v1/auth/register', (route) => {
+    body = route.request().postDataJSON()
+    return route.fulfill({ status: 201, json: authResponse })
+  })
+  await page.goto('/register')
+
+  await expect(page.getByLabel('Teléfono')).toBeDisabled()
+  await page.getByLabel('Tu zona').selectOption({ label: 'Arequipa, PE' })
+  await expect(page.getByText('+51', { exact: true })).toBeVisible()
+  await page.getByLabel('Teléfono').fill('912345678')
+  await expect(page.getByLabel('Teléfono')).toHaveValue('912 345 678')
+
+  await page.getByLabel('Nombre').fill('Laura Gómez')
+  await page.getByLabel('Correo').fill('laura@example.com')
+  await page.getByLabel('Contraseña').fill('password123')
+  await page.getByRole('button', { name: 'Crear cuenta' }).click()
+
+  await expect(page).toHaveURL(/\/feed$/)
+  expect(body.phoneE164).toBe('+51912345678')
+})
+
+test('keeps only digits and caps the phone to the country length', async ({ page }) => {
+  await page.goto('/register')
+  await page.getByLabel('Tu zona').selectOption({ label: 'Cochabamba, BO' })
+  await page.getByLabel('Teléfono').fill('7a1b2-3 4567 89')
+
+  await expect(page.getByLabel('Teléfono')).toHaveValue('7123 4567')
+})
+
+test('does not send a phone that is too short and says why', async ({ page }) => {
   let requests = 0
   await page.route('**/api/v1/auth/register', (route) => {
     requests++
     return route.fulfill({ status: 201, json: authResponse })
   })
   await page.goto('/register')
-  await fillForm(page, { phone: '5512345678' })
+  await fillForm(page, { phone: '7123' })
 
+  await expect(page.getByText('El teléfono debe tener 8 dígitos')).toBeVisible()
+  await expect(page.getByLabel('Teléfono')).toHaveAttribute('aria-invalid', 'true')
   await expect(page).toHaveURL(/\/register$/)
-  expect(
-    await page.getByLabel('Teléfono').evaluate((el: HTMLInputElement) => el.validity.valid),
-  ).toBe(false)
   expect(requests).toBe(0)
+})
+
+test('rejects a phone that does not start with a mobile digit', async ({ page }) => {
+  await page.goto('/register')
+  await page.getByLabel('Tu zona').selectOption({ label: 'Cochabamba, BO' })
+  await page.getByLabel('Teléfono').fill('21234567')
+  await page.getByLabel('Teléfono').blur()
+
+  await expect(page.getByText('Ingresa un número de celular válido')).toBeVisible()
 })

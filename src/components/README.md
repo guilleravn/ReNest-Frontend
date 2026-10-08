@@ -20,6 +20,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `SegmentedControl`, `SegmentedItem` | Tabs like "Agendadas / Completadas" | `active`, `icon`, `trailing`, `to` (link) or `onClick` |
 | `SearchInput` | Feed search box | `value`, `onChange`, `onClear` |
 | `Input`, `Textarea`, `Select` | Form fields (`Select` is a native select; children are `<option>`) | `invalid`; `Select`: `placeholder` |
+| `PhoneInput` | Phone field with a fixed calling-code prefix ('+591') before the input | `prefix`, `invalid`, plus native input props |
 | `Checkbox`, `CheckboxLink` | Inline checkbox with label; green links inside the label | `checked`, `disabled` |
 | `FormField` | Label + control + hint/error | `label`, `aside` ("Opcional"), `hint`, `error` |
 | `Avatar` | User photo or initial | `name`, `src`, `size`: sm · md · lg · xl |
