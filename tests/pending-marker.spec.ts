@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
 import { categories, feedPage, lampCard } from './fixtures/feed'
-import { internalError } from './fixtures/listings'
+import { internalError, ownListingDetail } from './fixtures/listings'
 import { activeItem, completedItem, pendingItem } from './fixtures/my-listings'
+import { completedSale, pendingSale } from './fixtures/reservations'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -120,4 +121,85 @@ test('does not ask for the count when nobody is logged in', async ({ page }) => 
   await expect(page.getByText(lampCard.title)).toBeVisible()
   await expect(page.getByRole('img', { name: /pendiente/ })).toHaveCount(0)
   expect(asked).toBe(false)
+})
+
+const tabs = (page: Page) => page.getByRole('navigation', { name: 'Estado de tus artículos' })
+
+for (const [status, label] of [
+  ['ACTIVE', 'Activos'],
+  ['PENDING', 'En proceso'],
+  ['COMPLETED', 'Completados'],
+]) {
+  test(`marks Pending sales on the En proceso tab from ${label} (SAL-2)`, async ({ page }) => {
+    await logIn(page)
+    await mockMyListings(page, [pendingItem])
+
+    await page.goto(`/listings?status=${status}`)
+
+    const enProceso = tabs(page).getByRole('link', { name: /En proceso/ })
+    await expect(enProceso.getByRole('img', { name: '1 venta pendiente' })).toBeVisible()
+    await expect(tabs(page).getByRole('img')).toHaveCount(1)
+  })
+}
+
+test('drops the marker after I confirm the handover, without a reload (SAL-2, SAL-4)', async ({ page }) => {
+  await logIn(page)
+  let handedOver = false
+  await page.route(`**/api/v1/reservations/${pendingSale.id}`, (route) =>
+    route.fulfill({ status: 200, json: handedOver ? completedSale : pendingSale }),
+  )
+  await page.route(`**/api/v1/reservations/${pendingSale.id}/handover`, (route) => {
+    handedOver = true
+    return route.fulfill({ status: 200, json: completedSale })
+  })
+  await page.route(`**/api/v1/listings/${pendingSale.listing.id}`, (route) =>
+    route.fulfill({
+      status: 200,
+      json: { ...ownListingDetail, id: pendingSale.listing.id, status: 'COMPLETED' },
+    }),
+  )
+  await page.route('**/api/v1/me/listings?*', (route) => {
+    const status = new URL(route.request().url()).searchParams.get('status')
+    const data: Record<string, unknown[]> = {
+      PENDING: handedOver ? [] : [pendingItem],
+      COMPLETED: handedOver ? [completedItem] : [],
+    }
+    return route.fulfill({ status: 200, json: data[status ?? ''] ?? [] })
+  })
+  let loads = 0
+  page.on('load', () => loads++)
+
+  await page.goto('/listings?status=PENDING')
+  await expect(myListingsLink(page).getByRole('img', { name: '1 venta pendiente' })).toBeVisible()
+
+  await page.getByRole('link', { name: /Bicicleta urbana rodado 28/ }).click()
+  await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+  await page.getByRole('button', { name: 'Sí, ya lo entregué' }).click()
+  await page.getByRole('link', { name: 'Ver mis completados' }).click()
+
+  await expect(page).toHaveURL('/listings?status=COMPLETED')
+  await expect(page.getByText('Vendido a Andrés Pérez')).toBeVisible()
+  await expect(page.getByRole('img', { name: /pendiente/ })).toHaveCount(0)
+  expect(loads).toBe(1)
+})
+
+test('keeps the count it saw on En proceso after switching tabs (SAL-2)', async ({ page }) => {
+  await logIn(page)
+  let pending = [pendingItem]
+  await page.route('**/api/v1/me/listings?*', (route) => {
+    const status = new URL(route.request().url()).searchParams.get('status')
+    return route.fulfill({ status: 200, json: status === 'PENDING' ? pending : [activeItem] })
+  })
+
+  await page.goto('/listings')
+  await expect(myListingsLink(page).getByRole('img', { name: '1 venta pendiente' })).toBeVisible()
+
+  // The sale is handed over elsewhere while the page stays open.
+  pending = []
+  await tabs(page).getByRole('link', { name: /En proceso/ }).click()
+  await expect(page.getByText('Nada pendiente por ahora')).toBeVisible()
+  await tabs(page).getByRole('link', { name: 'Activos' }).click()
+
+  await expect(page.getByText('Lámpara de pie de latón')).toBeVisible()
+  await expect(page.getByRole('img', { name: /pendiente/ })).toHaveCount(0)
 })

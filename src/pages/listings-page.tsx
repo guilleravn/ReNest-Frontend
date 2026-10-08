@@ -6,13 +6,14 @@ import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ListingRow, ListingRowGrid } from '@/components/listing/listing-row'
 import { Button, ButtonLink } from '@/components/ui/button'
+import { CountBadge } from '@/components/ui/count-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FloatingActionButton } from '@/components/ui/floating-action-button'
 import { PageHeader } from '@/components/ui/page-header'
 import { SegmentedControl, SegmentedItem } from '@/components/ui/segmented-control'
 import { conditionLabel, formatPrice } from '@/lib/format'
 import { getMyListings, type ListingStatus, type MyListing } from '@/lib/listings'
-import { usePendingSalesCount } from '@/lib/pending-sales'
+import { pendingSalesLabel, usePendingSalesCount } from '@/lib/pending-sales'
 
 type State =
   | { status: 'loading' }
@@ -49,7 +50,7 @@ function parseTab(value: string | null): ListingStatus {
 
 /** Seller tabs: Activos, En proceso and Completados (SAL-1). */
 export function ListingsPage() {
-  const navItems = defaultNavItems(usePendingSalesCount())
+  const fetchedPendingSales = usePendingSalesCount()
   const [searchParams] = useSearchParams()
   const tab = parseTab(searchParams.get('status'))
   const [attempt, setAttempt] = useState(0)
@@ -58,17 +59,29 @@ export function ListingsPage() {
   const requestKey = `${tab}:${attempt}`
   const [result, setResult] = useState<{ key: string; state: State } | null>(null)
   const state: State = result?.key === requestKey ? result.state : { status: 'loading' }
+  // The latest "En proceso" list wins over the count fetched on mount, so the
+  // markers match the rows and stay current after switching tabs. Opening the
+  // page on "En proceso" requests PENDING twice; that is accepted to keep the
+  // count hook shared by every page with the nav.
+  const [seenPendingSales, setSeenPendingSales] = useState<number>()
+  const pendingSales = seenPendingSales ?? fetchedPendingSales
 
   useEffect(() => {
     let current = true
     getMyListings(tab).then(
-      (items) => current && setResult({ key: requestKey, state: { status: 'ready', items } }),
+      (items) => {
+        if (!current) return
+        setResult({ key: requestKey, state: { status: 'ready', items } })
+        if (tab === 'PENDING') setSeenPendingSales(items.length)
+      },
       () => current && setResult({ key: requestKey, state: { status: 'error' } }),
     )
     return () => {
       current = false
     }
   }, [tab, requestKey])
+
+  const navItems = defaultNavItems(pendingSales)
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -80,7 +93,18 @@ export function ListingsPage() {
         <nav aria-label="Estado de tus artículos">
           <SegmentedControl>
             {TABS.map(({ status, label }) => (
-              <SegmentedItem key={status} to={`/listings?status=${status}`} active={status === tab}>
+              <SegmentedItem
+                key={status}
+                to={`/listings?status=${status}`}
+                active={status === tab}
+                trailing={
+                  status === 'PENDING' && pendingSales ? (
+                    <CountBadge tone="amber" label={pendingSalesLabel(pendingSales)}>
+                      {pendingSales}
+                    </CountBadge>
+                  ) : undefined
+                }
+              >
                 {label}
               </SegmentedItem>
             ))}
