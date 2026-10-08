@@ -1,4 +1,11 @@
-import type { ListingCondition, NewListing, UploadedPhoto, Weekday } from '@/lib/listings'
+import type {
+  ListingCondition,
+  ListingDetail,
+  ListingUpdate,
+  NewListing,
+  UploadedPhoto,
+  Weekday,
+} from '@/lib/listings'
 
 // UX mirror of the publish rules (LST-1..5, GEN-2). The API enforces them.
 export const MAX_PHOTOS = 3
@@ -150,6 +157,36 @@ export function toNewListing(
   }
 }
 
+/** The edit form's starting values: the listing as it is now. */
+export function toListingDetailsValues(listing: ListingDetail): ListingDetailsValues {
+  return {
+    photos: [...listing.photos]
+      .sort((a, b) => a.position - b.position)
+      .map(({ id, url }) => ({ photoId: id, url })),
+    title: listing.title,
+    categoryId: listing.category.id,
+    condition: listing.condition,
+    // Known limit (decision D-13): a price with cents, only possible through
+    // the API, prefills as "150.5" and must be made whole before saving.
+    price: String(listing.priceCents / 100),
+    description: listing.description,
+  }
+}
+
+/** The PATCH /listings/:id body; the photos replace the whole set (LST-12). */
+export function toListingUpdate(details: ListingDetailsValues): ListingUpdate {
+  return {
+    categoryId: details.categoryId,
+    title: details.title.trim(),
+    description: details.description.trim(),
+    condition: details.condition as ListingCondition,
+    priceCents: priceToCents(details.price) ?? 0,
+    photos: details.photos.map((photo) =>
+      'photoId' in photo ? { photoId: photo.photoId } : { storageKey: photo.storageKey },
+    ),
+  }
+}
+
 const API_DETAILS_FIELDS: Record<string, ListingDetailsField> = {
   categoryId: 'categoryId',
   title: 'title',
@@ -157,6 +194,7 @@ const API_DETAILS_FIELDS: Record<string, ListingDetailsField> = {
   condition: 'condition',
   priceCents: 'price',
   photoKeys: 'photos',
+  photos: 'photos',
 }
 
 /** The step 1 field an API `details[].field` points to ("photoKeys[1]" → photos), if any. */

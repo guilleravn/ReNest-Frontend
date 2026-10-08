@@ -12,6 +12,7 @@ import { PurchaseThanksPage } from '@/pages/purchase-thanks-page'
 import { ListingsPage } from '@/pages/listings-page'
 import { NewListingPage } from '@/pages/new-listing-page'
 import { ListingDetailPage } from '@/pages/listing-detail-page'
+import { EditListingPage } from '@/pages/edit-listing-page'
 import { ListingPickupTimesPage } from '@/pages/listing-pickup-times-page'
 import { ListingSaleCompletedPage } from '@/pages/listing-sale-completed-page'
 import { ListingPublishedPage } from '@/pages/listing-published-page'
@@ -45,6 +46,7 @@ function App() {
         <Route path="/listings" element={<ListingsPage />} />
         <Route path="/listings/new" element={<NewListingPage />} />
         <Route path="/listings/:id" element={<ListingDetailPage />} />
+        <Route path="/listings/:id/edit" element={<EditListingPage />} />
         <Route path="/listings/:id/pickup-times" element={<ListingPickupTimesPage />} />
         <Route path="/listings/:id/sale-completed" element={<ListingSaleCompletedPage />} />
         <Route path="/listings/:id/published" element={<ListingPublishedPage />} />

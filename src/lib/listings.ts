@@ -157,3 +157,29 @@ export interface NewListing {
 export function createListing(listing: NewListing): Promise<ListingDetail> {
   return api<ListingDetail>('/listings', { method: 'POST', body: listing })
 }
+
+/** One photo of the new set: one the listing has, or a new upload. */
+export type PhotoInput = { photoId: string } | { storageKey: string }
+
+/** PATCH /listings/:listingId body: any subset of the details (API contract §5). */
+export interface ListingUpdate {
+  categoryId?: string
+  title?: string
+  description?: string
+  condition?: ListingCondition
+  priceCents?: number
+  /** Replaces the whole set, in order; the first is the cover (LST-12). */
+  photos?: PhotoInput[]
+}
+
+/**
+ * Edits an Active listing; its publish date doesn't change (LST-13). Errors:
+ * 400 VALIDATION_ERROR, 403 NOT_LISTING_OWNER, 404 LISTING_NOT_FOUND,
+ * 409 LISTING_NOT_EDITABLE, 422 CATEGORY_NOT_FOUND, 422 INVALID_PHOTO_KEY.
+ */
+export function updateListing(id: string, update: ListingUpdate): Promise<ListingDetail> {
+  return api<ListingDetail>(`/listings/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: update,
+  })
+}
