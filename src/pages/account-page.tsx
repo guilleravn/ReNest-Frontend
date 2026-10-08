@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
-import { AppHeader } from '@/components/layout/app-header'
 import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
+import { SessionHeader } from '@/components/layout/session-header'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,11 +24,7 @@ export function AccountPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader
-        user={{ name: me.fullName, email: me.email, verified: me.isVerified }}
-        bordered={false}
-        onLogout={handleLogout}
-      />
+      <SessionHeader bordered={false} />
       <DesktopNav activeTo="/account" />
       <PageContainer width="narrow" bottomSpace="nav" className="space-y-6">
         <PageHeader title="Cuenta" />

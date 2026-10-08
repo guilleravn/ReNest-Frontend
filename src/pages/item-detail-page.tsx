@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
-import { AppHeader } from '@/components/layout/app-header'
 import { PageContainer } from '@/components/layout/page-container'
+import { SessionHeader } from '@/components/layout/session-header'
 import { ImageGallery } from '@/components/listing/image-gallery'
 import { PickupSlotItem, PickupSlotList } from '@/components/listing/pickup-slot-item'
 import { ProductSummary } from '@/components/listing/product-summary'
@@ -12,7 +12,6 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { InfoPanel } from '@/components/ui/info-panel'
 import { StickyActionBar } from '@/components/ui/sticky-action-bar'
 import { ApiError } from '@/lib/api'
-import { useAuth } from '@/lib/auth-context'
 import { cityLabel } from '@/lib/cities'
 import {
   conditionLabel,
@@ -35,10 +34,9 @@ const UNAVAILABLE_NOTE = {
 
 export function ItemDetailPage() {
   const { id = '' } = useParams()
-  const navigate = useNavigate()
+  const location = useLocation()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
-  const { user: me, signOut } = useAuth()
 
   useEffect(() => {
     let current = true
@@ -60,22 +58,12 @@ export function ItemDetailPage() {
     setAttempt((n) => n + 1)
   }
 
-  function handleLogout() {
-    signOut()
-    navigate('/login', { replace: true })
-  }
-
   const listing = state.status === 'ready' ? state.listing : null
   const showActions = listing?.status === 'ACTIVE' && !listing.viewer.isSeller
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader
-        backTo="/feed"
-        user={me ? { name: me.fullName, email: me.email, verified: me.isVerified } : undefined}
-        loginTo="/login"
-        onLogout={handleLogout}
-      />
+      <SessionHeader backTo="/feed" loginState={{ from: location.pathname }} />
       <PageContainer width="medium" bottomSpace={showActions ? 'actions' : 'default'}>
         {state.status === 'loading' && (
           <p role="status" className="py-16 text-center text-sm text-text-muted">

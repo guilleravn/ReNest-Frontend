@@ -91,7 +91,7 @@ test('lets a logged-in buyer schedule a pickup or ask the seller a question (BRW
 test('sends a logged-out visitor to login when asking a question, then back (BRW-7, GEN-7)', async ({ page }) => {
   await mockListing(page, listingDetail)
   await page.goto(DETAIL)
-  await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mis compras' })).toHaveCount(0)
 
   await page.getByRole('link', { name: '¿Preguntas sobre este producto?' }).click()
@@ -113,7 +113,7 @@ test('treats a session the API rejects as a visitor instead of sending to login 
 
   await page.goto(DETAIL)
 
-  await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Aparador de teca mediados de siglo' })).toBeVisible()
   await expect(page).toHaveURL(DETAIL)
   expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
