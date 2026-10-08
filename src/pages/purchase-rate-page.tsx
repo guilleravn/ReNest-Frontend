@@ -12,6 +12,7 @@ import { Toast, ToastViewport } from '@/components/ui/toast'
 import { ApiError } from '@/lib/api'
 import { ErrorCode } from '@/lib/error-codes'
 import { getReservation, rateSeller, type ReservationDetail } from '@/lib/reservations'
+import type { PurchaseThanksState } from '@/pages/purchase-thanks-page'
 
 type State =
   | { status: 'loading' }
@@ -69,7 +70,7 @@ export function PurchaseRatePage() {
       await rateSeller(purchase.id, stars)
       navigate(`/purchases/${purchase.id}/thanks`, {
         replace: true,
-        state: { sellerName: purchase.counterpart.fullName, rated: true },
+        state: { sellerName: purchase.counterpart.fullName, rated: true } satisfies PurchaseThanksState,
       })
     } catch (error) {
       setSaving(false)
@@ -165,7 +166,7 @@ export function PurchaseRatePage() {
             <ButtonLink
               to={`/purchases/${purchase.id}/thanks`}
               replace
-              state={{ sellerName: purchase.counterpart.fullName, rated: false }}
+              state={{ sellerName: purchase.counterpart.fullName, rated: false } satisfies PurchaseThanksState}
               variant="ghost"
               fullWidth
             >
