@@ -1,6 +1,6 @@
 import { ErrorCode } from '@/lib/error-codes'
 import { loginPath } from '@/lib/redirect'
-import { clearToken, getToken } from '@/lib/session'
+import { expireSession, getToken } from '@/lib/session'
 
 const BASE_URL: string =
   import.meta.env.VITE_API_URL ?? '/api/v1'
@@ -57,7 +57,7 @@ export async function api<T>(
   // out and send to login, coming back here afterwards. Login's own 401 is
   // a wrong password and is handled by the page.
   if (response.status === 401 && redirectOnUnauthorized && !path.startsWith('/auth/')) {
-    clearToken()
+    expireSession()
     window.location.assign(loginPath(window.location.pathname + window.location.search))
     return new Promise<never>(() => {})
   }
