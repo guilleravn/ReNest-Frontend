@@ -4,7 +4,7 @@ export function whatsappHref(phoneE164: string, message?: string): string {
   return message ? `${url}?text=${encodeURIComponent(message)}` : url
 }
 
-/** Buyer's first message about a listing (BRW-7). */
-export function listingQuestionMessage(title: string): string {
-  return `Hola, vi tu artículo "${title}" en ReNest y tengo una consulta.`
+/** Buyer's first message about a listing (BRW-7). `price` is already formatted. */
+export function listingQuestionMessage(sellerName: string, title: string, price: string): string {
+  return `Hola ${sellerName}, vi tu "${title}" (${price}) en ReNest y tengo una pregunta.`
 }
