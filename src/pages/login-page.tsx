@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
@@ -9,6 +9,7 @@ import { TextLink } from '@/components/ui/text-link'
 import { Toast, ToastViewport } from '@/components/ui/toast'
 import { ApiError } from '@/lib/api'
 import { ErrorCode } from '@/lib/error-codes'
+import { safeNext, withNext } from '@/lib/redirect'
 import { login } from '@/lib/auth'
 
 // Login never says which field was wrong: input the API rejects (e.g. a
@@ -27,6 +28,8 @@ function errorMessage(error: unknown): string {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -38,7 +41,7 @@ export function LoginPage() {
     setError(null)
     try {
       await login(email, password)
-      navigate('/feed')
+      navigate(safeNext(next), { replace: true })
     } catch (err) {
       setError(errorMessage(err))
       setSubmitting(false)
@@ -50,7 +53,7 @@ export function LoginPage() {
       <AuthLayout
         footer={
           <>
-            ¿No tienes cuenta? <TextLink to="/register">Regístrate</TextLink>
+            ¿No tienes cuenta? <TextLink to={withNext('/register', next)}>Regístrate</TextLink>
           </>
         }
       >

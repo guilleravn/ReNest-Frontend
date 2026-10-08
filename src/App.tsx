@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { RequireAuth } from '@/components/layout/require-auth'
 import { HomePage } from '@/pages/home-page'
 import { FeedPage } from '@/pages/feed-page'
 import { ItemDetailPage } from '@/pages/item-detail-page'
@@ -28,18 +29,21 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/items/:id" element={<ItemDetailPage />} />
-      <Route path="/items/:id/pickup" element={<ItemSchedulePickupPage />} />
-      <Route path="/items/:id/contact" element={<ItemContactPage />} />
-      <Route path="/purchases" element={<PurchasesPage />} />
-      <Route path="/purchases/:id" element={<PurchaseRecapPage />} />
-      <Route path="/purchases/:id/checklist" element={<PurchaseChecklistPage />} />
-      <Route path="/purchases/:id/rate" element={<PurchaseRatePage />} />
-      <Route path="/purchases/:id/thanks" element={<PurchaseThanksPage />} />
-      <Route path="/listings" element={<ListingsPage />} />
-      <Route path="/listings/new" element={<NewListingPage />} />
-      <Route path="/listings/:id" element={<ListingDetailPage />} />
-      <Route path="/listings/:id/pickup-times" element={<ListingPickupTimesPage />} />
-      <Route path="/listings/:id/sale-completed" element={<ListingSaleCompletedPage />} />
+      {/* Every action needs a session; browsing stays public */}
+      <Route element={<RequireAuth />}>
+        <Route path="/items/:id/pickup" element={<ItemSchedulePickupPage />} />
+        <Route path="/items/:id/contact" element={<ItemContactPage />} />
+        <Route path="/purchases" element={<PurchasesPage />} />
+        <Route path="/purchases/:id" element={<PurchaseRecapPage />} />
+        <Route path="/purchases/:id/checklist" element={<PurchaseChecklistPage />} />
+        <Route path="/purchases/:id/rate" element={<PurchaseRatePage />} />
+        <Route path="/purchases/:id/thanks" element={<PurchaseThanksPage />} />
+        <Route path="/listings" element={<ListingsPage />} />
+        <Route path="/listings/new" element={<NewListingPage />} />
+        <Route path="/listings/:id" element={<ListingDetailPage />} />
+        <Route path="/listings/:id/pickup-times" element={<ListingPickupTimesPage />} />
+        <Route path="/listings/:id/sale-completed" element={<ListingSaleCompletedPage />} />
+      </Route>
       {/* Shared components catalog */}
       <Route path="/ui-kit" element={<Navigate to="/ui-kit/primitives" replace />} />
       <Route path="/ui-kit/primitives" element={<UiKitPrimitivesPage />} />

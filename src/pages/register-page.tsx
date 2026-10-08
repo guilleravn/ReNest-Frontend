@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
@@ -9,6 +9,7 @@ import { TextLink } from '@/components/ui/text-link'
 import { Toast, ToastViewport } from '@/components/ui/toast'
 import { TrustNote } from '@/components/ui/trust-note'
 import { ApiError } from '@/lib/api'
+import { safeNext, withNext } from '@/lib/redirect'
 import { register, type City, type RegisterInput } from '@/lib/auth'
 import { CITY_OPTIONS } from '@/lib/cities'
 
@@ -45,6 +46,8 @@ function errorMessage(error: unknown): string {
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState<City | ''>('')
@@ -69,7 +72,7 @@ export function RegisterPage() {
     setInvalid({})
     try {
       await register({ fullName: name, email, phoneE164: phone, password, city })
-      navigate('/feed')
+      navigate(safeNext(next), { replace: true })
     } catch (err) {
       setError(errorMessage(err))
       setInvalid(fieldErrors(err))
@@ -82,7 +85,7 @@ export function RegisterPage() {
       <AuthLayout
         footer={
           <>
-            ¿Ya tienes cuenta? <TextLink to="/login">Inicia sesión</TextLink>
+            ¿Ya tienes cuenta? <TextLink to={withNext('/login', next)}>Inicia sesión</TextLink>
           </>
         }
       >
