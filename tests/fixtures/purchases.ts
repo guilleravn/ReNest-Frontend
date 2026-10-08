@@ -82,3 +82,10 @@ export const reservationNotFoundError = {
   message: 'Reservation not found.',
   details: null,
 }
+
+export const receptionAlreadyConfirmedError = {
+  statusCode: 409,
+  code: 'RECEPTION_ALREADY_CONFIRMED',
+  message: 'The reception was already confirmed.',
+  details: null,
+}

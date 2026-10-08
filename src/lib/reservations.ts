@@ -59,3 +59,23 @@ export function confirmHandover(id: string): Promise<ReservationDetail> {
     method: 'POST',
   })
 }
+
+/** The buyer's answers to the reception checklist (PUR-5). */
+export interface ReceptionAnswers {
+  matchesListing: boolean
+  worksNoUndisclosedDamage: boolean
+  allPartsIncluded: boolean
+  issueReport: string | null
+}
+
+/**
+ * Buyer only, once (PUR-7). Works before or after the seller's handover
+ * (PUR-4). A second confirmation gets 409 RECEPTION_ALREADY_CONFIRMED.
+ */
+export function confirmReception(id: string, answers: ReceptionAnswers): Promise<ReservationDetail> {
+  return api<ReservationDetail>(`/reservations/${encodeURIComponent(id)}/reception`, {
+    method: 'POST',
+    // The button is disabled until "Tengo el artículo conmigo ahora" is checked.
+    body: { ...answers, hasItemNow: true },
+  })
+}
