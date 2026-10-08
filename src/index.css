@@ -191,6 +191,7 @@
     --color-price: var(--color-price);
     --color-price-reduced: var(--color-price-reduced);
 
+    --radius-xs: calc(var(--radius-base) - 8px);
     --radius-sm: calc(var(--radius-base) - 4px);
     --radius-md: calc(var(--radius-base) - 2px);
     --radius-lg: var(--radius-base);
