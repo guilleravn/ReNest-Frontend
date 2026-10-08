@@ -156,3 +156,130 @@ test('keeps the loaded listings and lets me retry when "Cargar más" fails (BRW-
   await expect(cards_).toHaveCount(21)
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
+
+/** Records the query of every GET /listings and answers with `cards` or an empty page. */
+async function mockSearch(page: Page, matches: (url: URL) => object[]) {
+  const requests: URL[] = []
+  await mockFeed(page, (url, route) => {
+    requests.push(url)
+    return route.fulfill({ json: feedPage(matches(url), null) })
+  })
+  return requests
+}
+
+test('searches the title from 2 characters on, and not before (BRW-2)', async ({ page }) => {
+  const requests = await mockSearch(page, (url) =>
+    url.searchParams.get('q') === 'si' ? [sideboardCard] : [sideboardCard, lampCard],
+  )
+  await page.goto('/feed')
+  const search = page.getByRole('searchbox', { name: 'Buscar por título' })
+  const cards_ = page.getByRole('main').getByRole('listitem')
+  await expect(cards_).toHaveCount(2)
+
+  await search.fill(' s ')
+  // Picking a category makes a request: it must not carry the 1-character search.
+  await page.getByRole('button', { name: 'Muebles' }).click()
+  await expect.poll(() => requests.at(-1)?.searchParams.get('category')).toBe('muebles')
+  expect(requests.every((url) => !url.searchParams.has('q'))).toBe(true)
+
+  await search.fill('si')
+  await expect(cards_).toHaveCount(1)
+  expect(requests.at(-1)?.searchParams.get('q')).toBe('si')
+  await expect(page).toHaveURL(/[?&]q=si(&|$)/)
+})
+
+test('the category filter combines with the search (BRW-3)', async ({ page }) => {
+  const requests = await mockSearch(page, () => [lampCard])
+  await page.goto('/feed')
+
+  await page.getByRole('searchbox', { name: 'Buscar por título' }).fill('lámpara')
+  await expect.poll(() => requests.at(-1)?.searchParams.get('q')).toBe('lámpara')
+  await page.getByRole('group', { name: 'Categorías' }).getByRole('button', { name: 'Hogar' }).click()
+
+  await expect.poll(() => requests.at(-1)?.search).toBe(
+    `?${new URLSearchParams({ q: 'lámpara', category: 'hogar' })}`,
+  )
+  await expect(page.getByRole('button', { name: 'Hogar' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+})
+
+test('shows the categories from the API, with "Todas" selected by default (BRW-3)', async ({ page }) => {
+  await mockSearch(page, () => [sideboardCard])
+
+  await page.goto('/feed')
+
+  const chips = page.getByRole('group', { name: 'Categorías' }).getByRole('button')
+  await expect(chips).toHaveText(['Todas', 'Electrónica', 'Hogar', 'Muebles'])
+  await expect(chips.first()).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('with no results, "Limpiar filtros" clears the search and the category', async ({ page }) => {
+  const requests = await mockSearch(page, (url) =>
+    url.searchParams.has('q') || url.searchParams.has('category') ? [] : [sideboardCard],
+  )
+  await page.goto('/feed?q=bicicleta&category=hogar')
+  const search = page.getByRole('searchbox', { name: 'Buscar por título' })
+
+  await expect(page.getByText('No encontramos artículos')).toBeVisible()
+  await page.getByRole('button', { name: 'Limpiar filtros' }).click()
+
+  await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+  await expect(search).toHaveValue('')
+  await expect(page.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page).toHaveURL(/\/feed$/)
+  expect(requests.at(-1)?.search).toBe('')
+})
+
+test('the clear button in the search box removes the search (BRW-2)', async ({ page }) => {
+  const requests = await mockSearch(page, () => [sideboardCard])
+  await page.goto('/feed?q=teca')
+  const search = page.getByRole('searchbox', { name: 'Buscar por título' })
+  await expect(search).toHaveValue('teca')
+
+  await page.getByRole('button', { name: 'Borrar búsqueda' }).click()
+
+  await expect(search).toHaveValue('')
+  await expect.poll(() => requests.at(-1)?.searchParams.has('q')).toBe(false)
+})
+
+test('"Cargar más" keeps the current search and category (BRW-10)', async ({ page }) => {
+  const requests: URL[] = []
+  await mockFeed(page, (url, route) => {
+    requests.push(url)
+    return route.fulfill({
+      json: url.searchParams.has('cursor')
+        ? feedPage(cards(1, 21))
+        : feedPage(cards(20), 'page-2'),
+    })
+  })
+  await page.goto('/feed?q=silla&category=hogar')
+
+  await page.getByRole('button', { name: 'Cargar más' }).click()
+
+  await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(21)
+  expect(Object.fromEntries(requests.at(-1)!.searchParams)).toEqual({
+    q: 'silla',
+    category: 'hogar',
+    cursor: 'page-2',
+  })
+})
+
+test('"Inicio" resets the search box and the category', async ({ page }) => {
+  await page.clock.install()
+  const requests = await mockSearch(page, () => [sideboardCard])
+  await page.goto('/feed?q=teca&category=hogar')
+  const search = page.getByRole('searchbox', { name: 'Buscar por título' })
+  await expect(search).toHaveValue('teca')
+
+  await page.getByRole('link', { name: 'Inicio', exact: true }).filter({ visible: true }).click()
+
+  await expect(page).toHaveURL(/\/feed$/)
+  await expect(search).toHaveValue('')
+  await expect(page.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(() => requests.at(-1)?.search).toBe('')
+  // The old search must not come back once the debounce would have fired.
+  await page.clock.runFor(1000)
+  await expect(page).toHaveURL(/\/feed$/)
+  expect(requests.at(-1)?.search).toBe('')
+})
