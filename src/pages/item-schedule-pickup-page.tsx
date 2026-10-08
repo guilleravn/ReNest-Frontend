@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { StickyActionBar } from '@/components/ui/sticky-action-bar'
 import { TrustNote } from '@/components/ui/trust-note'
 import { ApiError } from '@/lib/api'
+import { ErrorCode } from '@/lib/error-codes'
 import { conditionLabel, formatPickupTime, formatPrice } from '@/lib/format'
 import { getListing, type ListingDetail, type PickupOption } from '@/lib/listings'
 import { mapsHref } from '@/lib/maps'
@@ -26,6 +27,8 @@ type State =
   | { status: 'not-found' }
   | { status: 'ready'; listing: ListingDetail }
   | { status: 'reserved'; reservation: ReservationDetail }
+  /** Someone else reserved it first (RES-5). */
+  | { status: 'taken' }
 
 const pickupTime = (option: PickupOption) =>
   formatPickupTime(option.weekdays, option.startTime, option.endTime)
@@ -76,11 +79,30 @@ export function ItemSchedulePickupPage() {
     try {
       const reservation = await createReservation(listing.id, selected.id)
       setState({ status: 'reserved', reservation })
-    } catch {
-      setNotice('No pudimos confirmar la reserva. Revisa tu conexión e inténtalo de nuevo.')
+    } catch (error) {
+      handleReserveError(error)
     } finally {
       setSubmitting(false)
       setConfirming(false)
+    }
+  }
+
+  // A 401 needs nothing here: the expired session already sends the user to login.
+  function handleReserveError(error: unknown) {
+    const code = error instanceof ApiError ? error.code : null
+    if (code === ErrorCode.LISTING_NOT_AVAILABLE) {
+      setState({ status: 'taken' })
+    } else if (code === ErrorCode.INVALID_PICKUP_OPTION) {
+      // The seller changed the pairs since the page loaded.
+      setNotice('Ese lugar y horario ya no está disponible. Elige otro.')
+      setSelectedId(null)
+      retry()
+    } else if (code === ErrorCode.CANNOT_RESERVE_OWN_LISTING) {
+      navigate(`/items/${id}`, { replace: true })
+    } else if (code === ErrorCode.LISTING_NOT_FOUND) {
+      setState({ status: 'not-found' })
+    } else if (code !== ErrorCode.UNAUTHORIZED) {
+      setNotice('No pudimos confirmar la reserva. Revisa tu conexión e inténtalo de nuevo.')
     }
   }
 
@@ -154,6 +176,19 @@ export function ItemSchedulePickupPage() {
             </OptionCardGroup>
             <TrustNote>El día exacto lo acuerdas con el vendedor por WhatsApp.</TrustNote>
           </>
+        )}
+
+        {state.status === 'taken' && (
+          <EmptyState
+            icon={<PackageX aria-hidden />}
+            title="Este artículo acaba de ser reservado"
+            description="Otra persona lo confirmó un momento antes que tú. No se creó ninguna reserva para ti."
+            action={
+              <ButtonLink to="/feed" size="md" variant="secondary">
+                Ver más productos
+              </ButtonLink>
+            }
+          />
         )}
 
         {state.status === 'reserved' && <ReservedSummary reservation={state.reservation} />}

@@ -6,7 +6,13 @@ import {
   listingNotFoundError,
   type ListingDetailFixture,
 } from './fixtures/listings'
-import { reservationDetail } from './fixtures/reservations'
+import {
+  cannotReserveOwnListingError,
+  invalidPickupOptionError,
+  listingNotAvailableError,
+  reservationDetail,
+  unauthorizedError,
+} from './fixtures/reservations'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -201,6 +207,72 @@ test('says the listing does not exist on 404 LISTING_NOT_FOUND', async ({ page }
   await page.goto('/items/unknown/pickup')
 
   await expect(page.getByText('Este artículo no existe')).toBeVisible()
+})
+
+test('says the item was just reserved when someone else confirmed first, without a summary (RES-5)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page)
+  await page.route('**/api/v1/reservations', (route) =>
+    route.fulfill({ status: 409, json: listingNotAvailableError }),
+  )
+  await page.goto(PICKUP)
+
+  await chooseAndConfirm(page, 'Plaza Principal')
+
+  await expect(page.getByText('Este artículo acaba de ser reservado')).toBeVisible()
+  await expect(page.getByText('No se creó ninguna reserva para ti.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '¡Listo, es tuyo!' })).toHaveCount(0)
+  await expect(confirmButton(page)).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Ver más productos' })).toHaveAttribute('href', '/feed')
+})
+
+test('reloads the pairs and asks for another when the chosen one was removed (RES-2)', async ({ page }) => {
+  await logIn(page)
+  let pickupOptions = listingDetailForBuyer.pickupOptions
+  await page.route(`**/api/v1/listings/${LISTING_ID}`, (route) =>
+    route.fulfill({ status: 200, json: { ...listingDetailForBuyer, pickupOptions } }),
+  )
+  await page.route('**/api/v1/reservations', (route) =>
+    route.fulfill({ status: 422, json: invalidPickupOptionError }),
+  )
+  await page.goto(PICKUP)
+  await expect(page.getByRole('radio')).toHaveCount(2)
+  pickupOptions = pickupOptions.slice(0, 1)
+
+  await chooseAndConfirm(page, 'Plaza Principal')
+
+  await expect(page.getByRole('alert')).toHaveText(
+    'Ese lugar y horario ya no está disponible. Elige otro.',
+  )
+  await expect(page.getByRole('radio')).toHaveCount(1)
+  await expect(page.getByRole('radio', { name: /Café Toscano/ })).toBeVisible()
+  await expect(confirmButton(page)).toBeDisabled()
+})
+
+test('sends to login when the session expired before confirming (RES-1)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page)
+  await page.route('**/api/v1/reservations', (route) =>
+    route.fulfill({ status: 401, json: unauthorizedError }),
+  )
+  await page.goto(PICKUP)
+
+  await chooseAndConfirm(page, 'Plaza Principal')
+
+  await expect(page).toHaveURL('/login')
+})
+
+test('sends back to the listing when the API says it is your own (RES-4)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page)
+  await page.route('**/api/v1/reservations', (route) =>
+    route.fulfill({ status: 403, json: cannotReserveOwnListingError }),
+  )
+  await page.goto(PICKUP)
+
+  await chooseAndConfirm(page, 'Plaza Principal')
+
+  await expect(page).toHaveURL(`/items/${LISTING_ID}`)
 })
 
 test('keeps the choice and lets the buyer try again when the reservation fails', async ({ page }) => {

@@ -92,3 +92,31 @@ export const reservationDetail = {
   rating: null,
   actions: { canConfirmHandover: false, canConfirmReception: true, canRate: false },
 }
+
+export const listingNotAvailableError = {
+  statusCode: 409,
+  code: 'LISTING_NOT_AVAILABLE',
+  message: 'This listing was already reserved.',
+  details: null,
+}
+
+export const invalidPickupOptionError = {
+  statusCode: 422,
+  code: 'INVALID_PICKUP_OPTION',
+  message: 'The pickup option does not belong to this listing.',
+  details: null,
+}
+
+export const cannotReserveOwnListingError = {
+  statusCode: 403,
+  code: 'CANNOT_RESERVE_OWN_LISTING',
+  message: 'You cannot reserve your own listing.',
+  details: null,
+}
+
+export const unauthorizedError = {
+  statusCode: 401,
+  code: 'UNAUTHORIZED',
+  message: 'Missing, invalid or expired token.',
+  details: null,
+}
