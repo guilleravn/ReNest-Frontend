@@ -8,3 +8,8 @@ export function whatsappHref(phoneE164: string, message?: string): string {
 export function listingQuestionMessage(sellerName: string, title: string, price: string): string {
   return `Hola ${sellerName}, vi tu "${title}" (${price}) en ReNest y tengo una pregunta.`
 }
+
+/** Seller's first message to the buyer who reserved `title`. */
+export function saleMessage(buyerName: string, title: string): string {
+  return `Hola ${buyerName}, te escribo por "${title}" que reservaste en ReNest.`
+}

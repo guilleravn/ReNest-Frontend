@@ -14,6 +14,7 @@ import { NewListingPage } from '@/pages/new-listing-page'
 import { ListingDetailPage } from '@/pages/listing-detail-page'
 import { ListingPickupTimesPage } from '@/pages/listing-pickup-times-page'
 import { ListingSaleCompletedPage } from '@/pages/listing-sale-completed-page'
+import { SaleDetailPage } from '@/pages/sale-detail-page'
 import { LoginPage } from '@/pages/login-page'
 import { RegisterPage } from '@/pages/register-page'
 import { AccountPage } from '@/pages/account-page'
@@ -45,6 +46,7 @@ function App() {
         <Route path="/listings/:id" element={<ListingDetailPage />} />
         <Route path="/listings/:id/pickup-times" element={<ListingPickupTimesPage />} />
         <Route path="/listings/:id/sale-completed" element={<ListingSaleCompletedPage />} />
+        <Route path="/sales/:reservationId" element={<SaleDetailPage />} />
         <Route path="/account" element={<AccountPage />} />
       </Route>
       {/* Shared components catalog */}
