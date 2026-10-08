@@ -16,11 +16,13 @@ const pageContainerVariants = cva("mx-auto w-full flex-1 px-4 py-6 sm:px-6 sm:py
     },
     /**
      * Bottom space so fixed bars don't cover content.
-     * `nav`: room for the mobile BottomNav. `none`: page handles it.
+     * `nav`: room for the mobile BottomNav. `actions`: room for a two-button
+     * StickyActionBar. `none`: page handles it.
      */
     bottomSpace: {
       default: "pb-12",
       nav: "pb-24 sm:pb-12",
+      actions: "pb-44",
       none: "pb-0",
     },
   },

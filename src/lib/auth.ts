@@ -1,5 +1,5 @@
-import { api } from '@/lib/api'
-import { clearToken, setToken } from '@/lib/session'
+import { api, ApiError } from '@/lib/api'
+import { clearToken, getToken, setToken } from '@/lib/session'
 
 export type City =
   | 'COCHABAMBA_BO'
@@ -51,6 +51,23 @@ export function register(input: RegisterInput): Promise<AuthResponse> {
 
 export function getMe(): Promise<Me> {
   return api<Me>('/me')
+}
+
+/**
+ * The logged-in user on public pages, or null for visitors. A session the
+ * API rejects is discarded instead of sending the visitor to login (GEN-5).
+ */
+export async function getSessionUser(): Promise<Me | null> {
+  if (!getToken()) return null
+  try {
+    return await api<Me>('/me', { redirectOnUnauthorized: false })
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearToken()
+      return null
+    }
+    throw error
+  }
 }
 
 /** There is no logout endpoint: the client just discards the token. */

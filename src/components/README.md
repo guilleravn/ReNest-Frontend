@@ -44,10 +44,10 @@ Text content (price, category, condition, location, status) is passed in as alre
 
 | Component | Used for | Key props |
 | --- | --- | --- |
-| `AppHeader` | Top bar: logo, "Mis compras", account menu | `user`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
+| `AppHeader` | Top bar: logo, "Mis compras", account menu (only "Entrar" when logged out) | `user` (omit when logged out), `loginTo`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
-| `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · none |
+| `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (two-button `StickyActionBar`) · none |
 
 Pages with `BottomNav` use `<AppHeader bordered={false} />` + `<DesktopNav />` + `<PageContainer bottomSpace="nav">`.
 Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no nav.

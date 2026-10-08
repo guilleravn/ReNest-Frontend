@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { BadgeCheck, ChevronLeft, LogOut, ShoppingBag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/ui/avatar"
+import { ButtonLink } from "@/components/ui/button"
 import { CountBadge } from "@/components/ui/count-badge"
 import {
   DropdownMenu,
@@ -31,7 +32,10 @@ type AccountMenuItem = {
 }
 
 type AppHeaderProps = {
-  user: HeaderUser
+  /** Omit for logged-out visitors: an "Entrar" link replaces the account menu. */
+  user?: HeaderUser
+  /** Where "Entrar" goes when there is no `user`. */
+  loginTo?: string
   /** Scheduled purchases counter on the "Mis compras" link. Hidden when 0/undefined. */
   purchasesCount?: number
   purchasesTo?: string
@@ -48,6 +52,7 @@ type AppHeaderProps = {
 /** Sticky top bar: logo, "Mis compras" link and account menu. */
 function AppHeader({
   user,
+  loginTo = "/login",
   purchasesCount,
   purchasesTo = "/purchases",
   homeTo = "/feed",
@@ -90,71 +95,79 @@ function AppHeader({
           />
         </Link>
         <div className="flex-1" />
-        <Link
-          to={purchasesTo}
-          aria-label={
-            purchasesCount ? `Mis compras, ${purchasesCount} agendadas` : "Mis compras"
-          }
-          className={cn(
-            "relative -mr-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-text-muted transition-colors hover:bg-muted hover:text-foreground",
-            focusRing
-          )}
-        >
-          <span className="relative">
-            <ShoppingBag className="size-5" aria-hidden />
-            {!!purchasesCount && (
-              <CountBadge className="absolute -top-1.5 -right-1.5">{purchasesCount}</CountBadge>
+        {user && (
+          <Link
+            to={purchasesTo}
+            aria-label={
+              purchasesCount ? `Mis compras, ${purchasesCount} agendadas` : "Mis compras"
+            }
+            className={cn(
+              "relative -mr-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-text-muted transition-colors hover:bg-muted hover:text-foreground",
+              focusRing
             )}
-          </span>
-          <span className="hidden sm:inline">Mis compras</span>
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Mi cuenta"
-            className={cn("ml-1 rounded-full transition-opacity hover:opacity-90", focusRing)}
           >
-            <Avatar name={user.name} src={user.avatarSrc} size="sm" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-60">
-            <div className="flex items-center gap-2.5 px-2 py-1.5">
-              <Avatar name={user.name} src={user.avatarSrc} size="md" />
-              <div className="grid min-w-0 flex-1 leading-tight">
-                <span className="flex items-center gap-1 truncate text-sm font-medium text-foreground">
-                  <span className="truncate">{user.name}</span>
-                  {user.verified && (
-                    <BadgeCheck className="size-3.5 shrink-0 text-verified" aria-hidden />
+            <span className="relative">
+              <ShoppingBag className="size-5" aria-hidden />
+              {!!purchasesCount && (
+                <CountBadge className="absolute -top-1.5 -right-1.5">{purchasesCount}</CountBadge>
+              )}
+            </span>
+            <span className="hidden sm:inline">Mis compras</span>
+          </Link>
+        )}
+        {!user ? (
+          <ButtonLink to={loginTo} variant="outline" size="md" className="ml-1">
+            Entrar
+          </ButtonLink>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Mi cuenta"
+              className={cn("ml-1 rounded-full transition-opacity hover:opacity-90", focusRing)}
+            >
+              <Avatar name={user.name} src={user.avatarSrc} size="sm" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-60">
+              <div className="flex items-center gap-2.5 px-2 py-1.5">
+                <Avatar name={user.name} src={user.avatarSrc} size="md" />
+                <div className="grid min-w-0 flex-1 leading-tight">
+                  <span className="flex items-center gap-1 truncate text-sm font-medium text-foreground">
+                    <span className="truncate">{user.name}</span>
+                    {user.verified && (
+                      <BadgeCheck className="size-3.5 shrink-0 text-verified" aria-hidden />
+                    )}
+                  </span>
+                  {user.email && (
+                    <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                   )}
-                </span>
-                {user.email && (
-                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-                )}
-                {user.location && (
-                  <span className="truncate text-xs text-muted-foreground">{user.location}</span>
-                )}
+                  {user.location && (
+                    <span className="truncate text-xs text-muted-foreground">{user.location}</span>
+                  )}
+                </div>
               </div>
-            </div>
-            {menuItems.length > 0 && <DropdownMenuSeparator />}
-            {menuItems.map((item, index) => (
-              <DropdownMenuItem
-                key={index}
-                variant={item.destructive ? "destructive" : "default"}
-                onClick={item.onClick}
-              >
-                {item.icon}
-                {item.label}
-              </DropdownMenuItem>
-            ))}
-            {onLogout && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={onLogout}>
-                  <LogOut aria-hidden />
-                  Cerrar sesión
+              {menuItems.length > 0 && <DropdownMenuSeparator />}
+              {menuItems.map((item, index) => (
+                <DropdownMenuItem
+                  key={index}
+                  variant={item.destructive ? "destructive" : "default"}
+                  onClick={item.onClick}
+                >
+                  {item.icon}
+                  {item.label}
                 </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              ))}
+              {onLogout && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={onLogout}>
+                    <LogOut aria-hidden />
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   )
