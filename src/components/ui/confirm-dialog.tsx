@@ -12,7 +12,7 @@ type ConfirmDialogProps = {
   confirmLabel: ReactNode
   cancelLabel?: ReactNode
   onConfirm: () => void
-  /** While the confirmed action runs: disables the confirm button so it can't be sent twice. */
+  /** While the confirmation is saving: both buttons are disabled and the dialog can't be dismissed. */
   pending?: boolean
   /** Extra content between the description and the actions. */
   children?: ReactNode
@@ -34,7 +34,7 @@ function ConfirmDialog({
   children,
 }: ConfirmDialogProps) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
       <Dialog.Portal>
         <Dialog.Backdrop className={backdropClasses} />
         <Dialog.Popup
@@ -55,7 +55,12 @@ function ConfirmDialog({
             <Button fullWidth onClick={onConfirm} disabled={pending} aria-busy={pending}>
               {confirmLabel}
             </Button>
-            <Button variant="ghost" fullWidth onClick={() => onOpenChange(false)}>
+            <Button
+              variant="ghost"
+              fullWidth
+              disabled={pending}
+              onClick={() => onOpenChange(false)}
+            >
               {cancelLabel}
             </Button>
           </div>

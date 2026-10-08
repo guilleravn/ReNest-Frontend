@@ -120,3 +120,10 @@ export const unauthorizedError = {
   message: 'Missing, invalid or expired token.',
   details: null,
 }
+
+export const handoverAlreadyConfirmedError = {
+  statusCode: 409,
+  code: 'HANDOVER_ALREADY_CONFIRMED',
+  message: 'The handover was already confirmed.',
+  details: null,
+}
