@@ -1,4 +1,7 @@
+import type { BadgeProps } from '@/components/ui/badge'
 import type { ListingCondition, Weekday } from '@/lib/listings'
+
+type BadgeTone = NonNullable<BadgeProps['tone']>
 
 const wholePrice = new Intl.NumberFormat('es', { maximumFractionDigits: 0, useGrouping: 'always' })
 const centsPrice = new Intl.NumberFormat('es', { minimumFractionDigits: 2, useGrouping: 'always' })
@@ -17,6 +20,17 @@ const CONDITION_LABELS: Record<ListingCondition, string> = {
 
 export function conditionLabel(condition: ListingCondition): string {
   return CONDITION_LABELS[condition]
+}
+
+const CONDITION_TONES: Record<ListingCondition, BadgeTone> = {
+  LIKE_NEW: 'green',
+  GENTLY_USED: 'blue',
+  HEAVILY_USED: 'amber',
+}
+
+/** Badge color of the condition pill on a card. */
+export function conditionTone(condition: ListingCondition): BadgeTone {
+  return CONDITION_TONES[condition]
 }
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
