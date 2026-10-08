@@ -1,5 +1,6 @@
 import { ErrorCode } from '@/lib/error-codes'
-import { getToken } from '@/lib/session'
+import { loginPath } from '@/lib/redirect'
+import { clearToken, getToken } from '@/lib/session'
 
 const BASE_URL: string =
   import.meta.env.VITE_API_URL ?? '/api/v1'
@@ -49,6 +50,15 @@ export async function api<T>(
   })
 
   const payload: unknown = await response.json().catch(() => null)
+
+  // A 401 outside /auth means the session is gone or expired: log
+  // out and send to login, coming back here afterwards. Login's own 401 is
+  // a wrong password and is handled by the page.
+  if (response.status === 401 && !path.startsWith('/auth/')) {
+    clearToken()
+    window.location.assign(loginPath(window.location.pathname + window.location.search))
+    return new Promise<never>(() => {})
+  }
 
   if (!response.ok) {
     const error = (payload ?? {}) as Partial<{

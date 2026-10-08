@@ -1,10 +1,28 @@
 const TOKEN_KEY = 'renest.accessToken'
 
+/** The stored token, or null when there is none or it has expired (then it is discarded). */
 export function getToken(): string | null {
+  let token: string | null
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    token = localStorage.getItem(TOKEN_KEY)
   } catch {
     return null
+  }
+  if (token && !isUnexpired(token)) {
+    clearToken()
+    return null
+  }
+  return token
+}
+
+/** Reads the JWT `exp` claim without verifying it; the API still has the last word. */
+function isUnexpired(token: string): boolean {
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const { exp } = JSON.parse(atob(payload)) as { exp?: unknown }
+    return typeof exp === 'number' && exp * 1000 > Date.now()
+  } catch {
+    return false
   }
 }
 
