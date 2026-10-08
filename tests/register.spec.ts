@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { authResponse, emailTakenError, validationError } from './fixtures/auth'
+import { authResponse, emailTakenError, rateLimitedError, validationError } from './fixtures/auth'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -128,4 +128,17 @@ test('rejects a phone that does not start with a mobile digit', async ({ page })
   await page.getByLabel('Teléfono').blur()
 
   await expect(page.getByText('Ingresa un número de celular válido')).toBeVisible()
+})
+
+test('explains that there were too many attempts', async ({ page }) => {
+  await page.route('**/api/v1/auth/register', (route) =>
+    route.fulfill({ status: 429, json: rateLimitedError }),
+  )
+  await page.goto('/register')
+  await fillForm(page)
+
+  await expect(
+    page.getByText('Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'),
+  ).toBeVisible()
+  await expect(page).toHaveURL(/\/register$/)
 })

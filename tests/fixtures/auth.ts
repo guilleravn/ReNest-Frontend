@@ -58,3 +58,10 @@ export const unauthorizedError = {
   message: 'Invalid or expired token',
   details: null,
 }
+
+export const rateLimitedError = {
+  statusCode: 429,
+  code: 'RATE_LIMITED',
+  message: 'Too many attempts. Try again later.',
+  details: null,
+}

@@ -23,6 +23,9 @@ function errorMessage(error: unknown): string {
   if (error instanceof ApiError && CREDENTIALS_ERRORS.has(error.code)) {
     return 'Correo o contraseña incorrectos'
   }
+  if (error instanceof ApiError && error.code === ErrorCode.RATE_LIMITED) {
+    return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+  }
   return 'No pudimos iniciar sesión. Inténtalo de nuevo.'
 }
 

@@ -44,6 +44,9 @@ function fieldErrors(error: unknown): FieldErrors {
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.code === 'EMAIL_TAKEN') return 'El correo ya está en uso'
+    if (error.code === 'RATE_LIMITED') {
+      return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+    }
     if (error.code === 'VALIDATION_ERROR') return 'Revisa los datos marcados.'
   }
   return 'No pudimos crear tu cuenta. Inténtalo de nuevo.'

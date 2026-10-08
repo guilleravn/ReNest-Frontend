@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { authResponse, invalidCredentialsError } from './fixtures/auth'
+import { authResponse, invalidCredentialsError, rateLimitedError } from './fixtures/auth'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -52,6 +52,22 @@ test('gives the same message when the API rejects the input itself (AUTH-5)', as
   await page.getByRole('button', { name: 'Entrar' }).click()
 
   await expect(page.getByText('Correo o contraseña incorrectos')).toBeVisible()
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('explains that there were too many attempts', async ({ page }) => {
+  await page.route('**/api/v1/auth/login', (route) =>
+    route.fulfill({ status: 429, json: rateLimitedError }),
+  )
+  await page.goto('/login')
+
+  await page.getByLabel('Correo').fill('laura@example.com')
+  await page.getByLabel('Contraseña').fill('password123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+
+  await expect(
+    page.getByText('Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'),
+  ).toBeVisible()
   await expect(page).toHaveURL(/\/login$/)
 })
 
