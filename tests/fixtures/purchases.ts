@@ -65,6 +65,15 @@ export const reservationDetail = {
   actions: { canConfirmHandover: false, canConfirmReception: true, canRate: false },
 }
 
+/** `receptionChecklist` once reception is confirmed (contract §2). */
+export const receptionChecklist = {
+  matchesListing: true,
+  worksNoUndisclosedDamage: true,
+  allPartsIncluded: true,
+  issueReport: null,
+  createdAt: '2026-10-09T12:00:00.000Z',
+}
+
 export type ReservationDetailFixture = typeof reservationDetail
 
 export const reservationNotFoundError = {
