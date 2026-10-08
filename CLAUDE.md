@@ -5,7 +5,7 @@ React 19 + Vite SPA for ReNest, a secondhand marketplace for LatAm, built with R
 ## Commands
 
 - `npm run dev`: app on `http://localhost:5173`.
-- `npm run lint` · `npm run build` (includes the type check) · `npm run test:e2e` (Playwright).
+- `npm run lint` · `npm run build` (includes the type check) · `npm run test:e2e` (Playwright, mocked API) · `npm run test:e2e:real` (Playwright against the real backend and test database; needs the backend's `db:up` and a POSIX shell: macOS, Linux or WSL, not cmd or PowerShell).
 - Before every commit: `npm run lint && npm run build && npm run test:e2e`.
 
 ## Architecture

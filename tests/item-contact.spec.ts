@@ -65,7 +65,7 @@ test('sends the message as edited by the buyer (BRW-7)', async ({ page }) => {
 test('sends a logged-out visitor to login first (BRW-7, GEN-7)', async ({ page }) => {
   await page.goto(CONTACT)
 
-  await expect(page).toHaveURL(`/login?next=${encodeURIComponent(CONTACT)}`)
+  await expect(page).toHaveURL('/login')
 })
 
 test('sends to login when the API no longer recognizes the session and hides the phone (GEN-7)', async ({ page }) => {
@@ -74,7 +74,7 @@ test('sends to login when the API no longer recognizes the session and hides the
 
   await page.goto(CONTACT)
 
-  await expect(page).toHaveURL(`/login?next=${encodeURIComponent(CONTACT)}`)
+  await expect(page).toHaveURL('/login')
   expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
 })
 

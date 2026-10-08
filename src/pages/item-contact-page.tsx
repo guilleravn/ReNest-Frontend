@@ -14,8 +14,7 @@ import { getMe, logout, type Me } from '@/lib/auth'
 import { cityLabel } from '@/lib/cities'
 import { formatPrice, formatSellerRating } from '@/lib/format'
 import { getListing, type ListingDetail } from '@/lib/listings'
-import { loginPath } from '@/lib/redirect'
-import { clearToken } from '@/lib/session'
+import { expireSession } from '@/lib/session'
 import { listingQuestionMessage, whatsappHref } from '@/lib/whatsapp'
 
 type State =
@@ -42,8 +41,8 @@ export function ItemContactPage() {
         // The API hides the phone from anyone it doesn't recognize (GEN-7):
         // the stored session is no longer valid, so log in again.
         if (listing.seller.phoneE164 === null) {
-          clearToken()
-          navigate(loginPath(location.pathname), { replace: true })
+          expireSession()
+          navigate('/login', { replace: true, state: { from: location.pathname } })
           return
         }
         if (listing.viewer.isSeller) {

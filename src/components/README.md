@@ -20,6 +20,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `SegmentedControl`, `SegmentedItem` | Tabs like "Agendadas / Completadas" | `active`, `icon`, `trailing`, `to` (link) or `onClick` |
 | `SearchInput` | Feed search box | `value`, `onChange`, `onClear` |
 | `Input`, `Textarea`, `Select` | Form fields (`Select` is a native select; children are `<option>`) | `invalid`; `Select`: `placeholder` |
+| `PhoneInput` | Phone field with a fixed calling-code prefix ('+591') before the input | `prefix`, `invalid`, plus native input props |
 | `Checkbox`, `CheckboxLink` | Inline checkbox with label; green links inside the label | `checked`, `disabled` |
 | `FormField` | Label + control + hint/error | `label`, `aside` ("Opcional"), `hint`, `error` |
 | `Avatar` | User photo or initial | `name`, `src`, `size`: sm · md · lg · xl |
@@ -44,12 +45,14 @@ Text content (price, category, condition, location, status) is passed in as alre
 
 | Component | Used for | Key props |
 | --- | --- | --- |
-| `AppHeader` | Top bar: logo, "Mis compras", account menu (only "Entrar" when logged out) | `user` (omit when logged out), `loginTo`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
+| `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
+| `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `bordered`, `menuItems`, `loginState` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
+| `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
 | `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (two-button `StickyActionBar`) · none |
 
-Pages with `BottomNav` use `<AppHeader bordered={false} />` + `<DesktopNav />` + `<PageContainer bottomSpace="nav">`.
+Pages with `BottomNav` use `<SessionHeader bordered={false} />` + `<DesktopNav />` + `<PageContainer bottomSpace="nav">`.
 Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no nav.
 
 ## `listing/`: domain

@@ -1,6 +1,5 @@
 import { ErrorCode } from '@/lib/error-codes'
-import { loginPath } from '@/lib/redirect'
-import { clearToken, getToken } from '@/lib/session'
+import { expireSession, getToken } from '@/lib/session'
 
 const BASE_URL: string =
   import.meta.env.VITE_API_URL ?? '/api/v1'
@@ -32,13 +31,11 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
-  /** false: a 401 throws an ApiError instead of logging out and going to login. */
-  redirectOnUnauthorized?: boolean
 }
 
 export async function api<T>(
   path: string,
-  { method = 'GET', body, redirectOnUnauthorized = true }: RequestOptions = {},
+  { method = 'GET', body }: RequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
@@ -53,14 +50,9 @@ export async function api<T>(
 
   const payload: unknown = await response.json().catch(() => null)
 
-  // A 401 outside /auth means the session is gone or expired: log
-  // out and send to login, coming back here afterwards. Login's own 401 is
-  // a wrong password and is handled by the page.
-  if (response.status === 401 && redirectOnUnauthorized && !path.startsWith('/auth/')) {
-    clearToken()
-    window.location.assign(loginPath(window.location.pathname + window.location.search))
-    return new Promise<never>(() => {})
-  }
+  // A 401 outside /auth means the session is gone or expired. Login's own 401
+  // is a wrong password and is handled by the page.
+  if (response.status === 401 && !path.startsWith('/auth/')) expireSession()
 
   if (!response.ok) {
     const error = (payload ?? {}) as Partial<{

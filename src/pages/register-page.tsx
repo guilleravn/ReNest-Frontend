@@ -1,29 +1,34 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Input, Select } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { PageHeader } from '@/components/ui/page-header'
 import { TextLink } from '@/components/ui/text-link'
 import { Toast, ToastViewport } from '@/components/ui/toast'
 import { TrustNote } from '@/components/ui/trust-note'
 import { ApiError } from '@/lib/api'
-import { safeNext, withNext } from '@/lib/redirect'
 import { register, type City, type RegisterInput } from '@/lib/auth'
+import { useAuth } from '@/lib/auth-context'
 import { CITY_OPTIONS } from '@/lib/cities'
+import {
+  PHONE_COUNTRIES,
+  formatNational,
+  sanitizeNationalDigits,
+  toE164,
+  validateNationalPhone,
+} from '@/lib/phone-countries'
 
 type Field = keyof RegisterInput
 type FieldErrors = Partial<Record<Field, string>>
-
-// Same E.164 rule as the API, as an HTML pattern attribute.
-const PHONE_PATTERN = String.raw`\+[1-9]\d{7,14}`
 
 const FIELD_MESSAGES: Record<Field, string> = {
   fullName: 'El nombre debe tener entre 2 y 120 caracteres',
   email: 'Ingresa un correo válido',
   city: 'Elige tu zona de la lista',
-  phoneE164: 'Usa el formato internacional, por ejemplo +59171234567',
+  phoneE164: 'El teléfono no es válido para el país elegido',
   password: 'La contraseña debe tener entre 8 y 72 caracteres',
 }
 
@@ -39,23 +44,36 @@ function fieldErrors(error: unknown): FieldErrors {
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.code === 'EMAIL_TAKEN') return 'El correo ya está en uso'
+    if (error.code === 'RATE_LIMITED') {
+      return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+    }
     if (error.code === 'VALIDATION_ERROR') return 'Revisa los datos marcados.'
   }
   return 'No pudimos crear tu cuenta. Inténtalo de nuevo.'
 }
 
 export function RegisterPage() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const next = searchParams.get('next')
+  const location = useLocation()
+  const { signIn } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState<City | ''>('')
-  const [phone, setPhone] = useState('')
+  const [phoneDigits, setPhoneDigits] = useState('')
+  const [phoneTouched, setPhoneTouched] = useState(false)
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [invalid, setInvalid] = useState<FieldErrors>({})
+
+  const phoneRuleError = city ? validateNationalPhone(phoneDigits, city) : null
+  const phoneError =
+    (phoneTouched ? phoneRuleError : null) ?? invalid.phoneE164 ?? null
+
+  function handleCityChange(next: City) {
+    setCity(next)
+    setPhoneDigits((digits) => sanitizeNationalDigits(digits, next))
+    setInvalid(({ city: _city, phoneE164: _phone, ...rest }) => rest)
+  }
 
   function edit(field: Field, setter: (value: string) => void) {
     return (value: string) => {
@@ -67,12 +85,14 @@ export function RegisterPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!city) return
+    setPhoneTouched(true)
+    if (validateNationalPhone(phoneDigits, city)) return
     setSubmitting(true)
     setError(null)
     setInvalid({})
     try {
-      await register({ fullName: name, email, phoneE164: phone, password, city })
-      navigate(safeNext(next), { replace: true })
+      const { user } = await register({ fullName: name, email, phoneE164: toE164(phoneDigits, city), password, city })
+      signIn(user)
     } catch (err) {
       setError(errorMessage(err))
       setInvalid(fieldErrors(err))
@@ -85,7 +105,7 @@ export function RegisterPage() {
       <AuthLayout
         footer={
           <>
-            ¿Ya tienes cuenta? <TextLink to={withNext('/login', next)}>Inicia sesión</TextLink>
+            ¿Ya tienes cuenta? <TextLink to="/login" state={location.state}>Inicia sesión</TextLink>
           </>
         }
       >
@@ -138,7 +158,7 @@ export function RegisterPage() {
               required
               invalid={!!invalid.city}
               value={city}
-              onChange={(event) => edit('city', (value) => setCity(value as City))(event.target.value)}
+              onChange={(event) => edit('city', (value) => handleCityChange(value as City))(event.target.value)}
             >
               {CITY_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -151,21 +171,29 @@ export function RegisterPage() {
           <FormField
             label="Teléfono"
             htmlFor="phone"
-            hint="Con código de país, por ejemplo +59171234567. Se usa para coordinar la entrega por WhatsApp."
-            error={invalid.phoneE164}
+            hint={
+              city
+                ? `Se usa para coordinar por WhatsApp. ${PHONE_COUNTRIES[city].hint}`
+                : 'Elige tu zona para ingresar tu teléfono.'
+            }
+            error={phoneError}
           >
-            <Input
+            <PhoneInput
               id="phone"
               name="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+525512345678"
-              required
-              pattern={PHONE_PATTERN}
-              title={FIELD_MESSAGES.phoneE164}
-              invalid={!!invalid.phoneE164}
-              value={phone}
-              onChange={(event) => edit('phoneE164', setPhone)(event.target.value)}
+              autoComplete="tel-national"
+              prefix={city ? `+${PHONE_COUNTRIES[city].callingCode}` : '+'}
+              placeholder={city ? PHONE_COUNTRIES[city].placeholder : ''}
+              disabled={!city}
+              invalid={phoneError !== null}
+              value={city ? formatNational(phoneDigits, city) : ''}
+              onChange={(event) => {
+                if (!city) return
+                edit('phoneE164', (value) => setPhoneDigits(sanitizeNationalDigits(value, city)))(
+                  event.target.value,
+                )
+              }}
+              onBlur={() => setPhoneTouched(true)}
             />
           </FormField>
 

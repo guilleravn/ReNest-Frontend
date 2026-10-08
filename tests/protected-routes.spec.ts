@@ -9,7 +9,7 @@ test('sends a logged-out user from publishing to login and back afterwards', asy
   )
   await page.goto('/listings/new')
 
-  await expect(page).toHaveURL(/\/login\?next=%2Flistings%2Fnew$/)
+  await expect(page).toHaveURL(/\/login$/)
   await page.getByLabel('Correo').fill('laura@example.com')
   await page.getByLabel('Contraseña').fill('password123')
   await page.getByRole('button', { name: 'Entrar' }).click()
@@ -22,13 +22,13 @@ test('returns to the reservation after signing up from the login screen', async 
     route.fulfill({ status: 201, json: authResponse }),
   )
   await page.goto('/items/42/pickup')
-  await expect(page).toHaveURL(/\/login\?next=/)
+  await expect(page).toHaveURL(/\/login$/)
 
   await page.getByRole('link', { name: 'Regístrate' }).click()
   await page.getByLabel('Nombre').fill('Laura Gómez')
   await page.getByLabel('Correo').fill('laura@example.com')
   await page.getByLabel('Tu zona').selectOption({ label: 'Cochabamba, BO' })
-  await page.getByLabel('Teléfono').fill('+525512345678')
+  await page.getByLabel('Teléfono').fill('71234567')
   await page.getByLabel('Contraseña').fill('password123')
   await page.getByRole('button', { name: 'Crear cuenta' }).click()
 
@@ -39,12 +39,15 @@ for (const path of ['/purchases/7/checklist', '/purchases/7/rate', '/listings/7'
   test(`requires login for ${path}`, async ({ page }) => {
     await page.goto(path)
 
-    await expect(page).toHaveURL(`/login?next=${encodeURIComponent(path)}`)
+    await expect(page).toHaveURL(/\/login$/)
   })
 }
 
 test('lets a logged-in user straight into a protected action', async ({ page }) => {
   await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
+  await page.route('**/api/v1/me', (route) =>
+    route.fulfill({ status: 200, json: authResponse.user }),
+  )
   await page.goto('/listings/new')
 
   await expect(page).toHaveURL(/\/listings\/new$/)
@@ -57,16 +60,3 @@ for (const path of ['/feed', '/items/42']) {
     await expect(page).toHaveURL(path)
   })
 }
-
-test('ignores a return address outside the app', async ({ page }) => {
-  await page.route('**/api/v1/auth/login', (route) =>
-    route.fulfill({ status: 200, json: authResponse }),
-  )
-  await page.goto('/login?next=//evil.example.com')
-
-  await page.getByLabel('Correo').fill('laura@example.com')
-  await page.getByLabel('Contraseña').fill('password123')
-  await page.getByRole('button', { name: 'Entrar' }).click()
-
-  await expect(page).toHaveURL(/localhost:5173\/feed$/)
-})

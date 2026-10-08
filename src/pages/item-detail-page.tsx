@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
-import { AppHeader } from '@/components/layout/app-header'
 import { PageContainer } from '@/components/layout/page-container'
+import { SessionHeader } from '@/components/layout/session-header'
 import { ImageGallery } from '@/components/listing/image-gallery'
 import { PickupSlotItem, PickupSlotList } from '@/components/listing/pickup-slot-item'
 import { ProductSummary } from '@/components/listing/product-summary'
@@ -12,7 +12,6 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { InfoPanel } from '@/components/ui/info-panel'
 import { StickyActionBar } from '@/components/ui/sticky-action-bar'
 import { ApiError } from '@/lib/api'
-import { getSessionUser, logout, type Me } from '@/lib/auth'
 import { cityLabel } from '@/lib/cities'
 import {
   conditionLabel,
@@ -21,8 +20,6 @@ import {
   formatSellerRating,
 } from '@/lib/format'
 import { getListing, type ListingDetail } from '@/lib/listings'
-import { loginPath } from '@/lib/redirect'
-import { getToken } from '@/lib/session'
 
 type State =
   | { status: 'loading' }
@@ -38,11 +35,8 @@ const UNAVAILABLE_NOTE = {
 export function ItemDetailPage() {
   const { id = '' } = useParams()
   const location = useLocation()
-  const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
-  const [me, setMe] = useState<Me | null>(null)
-  const [loggedIn, setLoggedIn] = useState(() => getToken() !== null)
 
   useEffect(() => {
     let current = true
@@ -59,29 +53,9 @@ export function ItemDetailPage() {
     }
   }, [id, attempt])
 
-  useEffect(() => {
-    let current = true
-    getSessionUser().then(
-      (user) => {
-        if (!current) return
-        setMe(user)
-        setLoggedIn(user !== null)
-      },
-      () => {},
-    )
-    return () => {
-      current = false
-    }
-  }, [])
-
   function retry() {
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
-  }
-
-  function handleLogout() {
-    logout()
-    navigate('/login', { replace: true })
   }
 
   const listing = state.status === 'ready' ? state.listing : null
@@ -89,16 +63,7 @@ export function ItemDetailPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader
-        backTo="/feed"
-        user={
-          loggedIn
-            ? { name: me?.fullName ?? '', email: me?.email, verified: me?.isVerified }
-            : undefined
-        }
-        loginTo={loginPath(location.pathname)}
-        onLogout={handleLogout}
-      />
+      <SessionHeader backTo="/feed" loginState={{ from: location.pathname }} />
       <PageContainer width="medium" bottomSpace={showActions ? 'actions' : 'default'}>
         {state.status === 'loading' && (
           <p role="status" className="py-16 text-center text-sm text-text-muted">

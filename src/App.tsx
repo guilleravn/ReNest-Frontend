@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { RequireAuth } from '@/components/layout/require-auth'
+import { PublicOnly, RequireAuth } from '@/components/layout/route-guards'
 import { HomePage } from '@/pages/home-page'
 import { FeedPage } from '@/pages/feed-page'
 import { ItemDetailPage } from '@/pages/item-detail-page'
@@ -26,8 +26,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route element={<PublicOnly />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/items/:id" element={<ItemDetailPage />} />
       {/* Every action needs a session; browsing stays public */}
