@@ -124,3 +124,16 @@ export interface MyListing {
 export function getMyListings(status: ListingStatus): Promise<MyListing[]> {
   return api<MyListing[]>(`/me/listings?status=${status}`)
 }
+
+export interface UploadedPhoto {
+  /** Sent back in `photoKeys` when publishing. */
+  storageKey: string
+  url: string
+}
+
+/** One photo, uploaded as soon as it is picked (LST-2). Errors: 400 INVALID_FILE. */
+export function uploadPhoto(file: File): Promise<UploadedPhoto> {
+  const body = new FormData()
+  body.append('file', file)
+  return api<UploadedPhoto>('/uploads/photos', { method: 'POST', body })
+}

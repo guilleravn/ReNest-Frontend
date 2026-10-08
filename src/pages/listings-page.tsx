@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Bell, CircleAlert, PackageCheck, PackageOpen, Tags } from 'lucide-react'
+import { Bell, CircleAlert, PackageCheck, PackageOpen, Plus, Tags } from 'lucide-react'
 import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ListingRow, ListingRowGrid } from '@/components/listing/listing-row'
-import { Button } from '@/components/ui/button'
+import { Button, ButtonLink } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FloatingActionButton } from '@/components/ui/floating-action-button'
 import { PageHeader } from '@/components/ui/page-header'
 import { SegmentedControl, SegmentedItem } from '@/components/ui/segmented-control'
 import { conditionLabel, formatPrice } from '@/lib/format'
@@ -103,7 +104,18 @@ export function ListingsPage() {
           />
         )}
 
-        {state.status === 'ready' && state.items.length === 0 && <EmptyState {...EMPTY[tab]} />}
+        {state.status === 'ready' && state.items.length === 0 && (
+          <EmptyState
+            {...EMPTY[tab]}
+            action={
+              tab === 'ACTIVE' ? (
+                <ButtonLink to="/listings/new" size="md">
+                  Publicar un artículo
+                </ButtonLink>
+              ) : undefined
+            }
+          />
+        )}
 
         {state.status === 'ready' && state.items.length > 0 && (
           <ListingRowGrid>
@@ -115,6 +127,9 @@ export function ListingsPage() {
           </ListingRowGrid>
         )}
       </PageContainer>
+      <FloatingActionButton to="/listings/new" icon={<Plus className="size-4" aria-hidden />}>
+        Nuevo artículo
+      </FloatingActionButton>
       <BottomNav activeTo="/listings" />
     </div>
   )

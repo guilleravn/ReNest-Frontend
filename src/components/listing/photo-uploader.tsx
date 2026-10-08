@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { ImagePlus, X } from "lucide-react"
+import { ImagePlus, LoaderCircle, X } from "lucide-react"
 
 type PhotoUploaderProps = {
   /** URLs of the photos already added (object URLs or remote). */
@@ -7,9 +7,15 @@ type PhotoUploaderProps = {
   /** Called with the files the user picked. */
   onAdd: (files: File[]) => void
   onRemove: (index: number) => void
-  /** Hides the add tile once reached. */
+  /** Hides the add tile once reached (uploading tiles count too). */
   max?: number
   addLabel?: string
+  /** Number of photos still uploading; each shows a spinner tile after the photos. */
+  uploading?: number
+  /** Marks the first photo ("Portada"). */
+  coverLabel?: string
+  /** File types the picker offers. */
+  accept?: string
 }
 
 /** Photo grid with remove buttons and an "Agregar" tile that opens the file picker. */
@@ -19,9 +25,12 @@ function PhotoUploader({
   onRemove,
   max,
   addLabel = "Agregar",
+  uploading = 0,
+  coverLabel,
+  accept = "image/*",
 }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const canAdd = max === undefined || photos.length < max
+  const canAdd = max === undefined || photos.length + uploading < max
 
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -30,15 +39,34 @@ function PhotoUploader({
           key={`${src}-${index}`}
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-surface-sunken"
         >
-          <img src={src} alt="Foto del artículo" className="h-full w-full object-cover" />
+          <img
+            src={src}
+            alt={`Foto ${index + 1} del artículo`}
+            className="h-full w-full object-cover"
+          />
+          {coverLabel && index === 0 && (
+            <span className="absolute bottom-1 left-1 rounded-md bg-foreground/55 px-1.5 py-0.5 text-badge font-semibold text-text-inverse">
+              {coverLabel}
+            </span>
+          )}
           <button
             type="button"
-            aria-label="Quitar foto"
+            aria-label={`Quitar foto ${index + 1}`}
             onClick={() => onRemove(index)}
             className="absolute top-1 right-1 inline-flex size-6 items-center justify-center rounded-full bg-foreground/55 text-text-inverse transition-colors hover:bg-foreground/75"
           >
             <X className="size-3.5" aria-hidden />
           </button>
+        </div>
+      ))}
+      {Array.from({ length: uploading }, (_, index) => (
+        <div
+          key={`uploading-${index}`}
+          role="status"
+          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border bg-surface-sunken text-xs text-text-muted"
+        >
+          <LoaderCircle className="size-5 animate-spin" aria-hidden />
+          Subiendo…
         </div>
       ))}
       {canAdd && (
@@ -54,7 +82,7 @@ function PhotoUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         multiple
         className="hidden"
         onChange={(event) => {
