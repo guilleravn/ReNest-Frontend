@@ -35,6 +35,21 @@ The app runs at `http://localhost:5173`.
 
 No `.env` is needed for local development: the app calls `/api/v1` and the Vite dev server proxies `/api` to the backend at `http://localhost:3000`. To point at another API, set `VITE_API_URL` (for example `https://api.example.com/api/v1`) in `.env.local`. See [.env.example](.env.example).
 
+## Deployment
+
+| Piece | URL |
+|---|---|
+| Frontend (Vercel) | https://re-nest-frontend.vercel.app |
+| API (Railway) | https://renest-backend-production.up.railway.app |
+
+Set this variable in the Vercel project (Settings → Environment Variables). Vite reads it at build time, so redeploy after changing it:
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://renest-backend-production.up.railway.app/api/v1` |
+
+The API only accepts requests from the frontend origin (`CORS_ORIGIN` in the backend). If you add another domain, such as a preview, add it there too. `vercel.json` rewrites every route to `index.html` so client-side routes such as `/login` do not 404.
+
 ## Scripts
 
 | Script | Purpose |
