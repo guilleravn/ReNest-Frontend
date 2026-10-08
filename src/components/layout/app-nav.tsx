@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { House, Tags, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { pendingSalesLabel } from "@/lib/pending-sales"
 import { CountBadge } from "@/components/ui/count-badge"
 import { SegmentedControl, SegmentedItem } from "@/components/ui/segmented-control"
 
@@ -11,6 +12,8 @@ type NavItem = {
   icon: ReactNode
   /** Counter badge. Hidden when 0/undefined. */
   count?: number
+  /** Accessible name of the counter badge. */
+  countLabel?: string
 }
 
 type AppNavProps = {
@@ -20,10 +23,17 @@ type AppNavProps = {
   items?: NavItem[]
 }
 
-function defaultNavItems(listingsCount?: number): NavItem[] {
+/** `pendingSales` fills the "Mis artículos" counter (SAL-2). */
+function defaultNavItems(pendingSales?: number): NavItem[] {
   return [
     { label: "Inicio", to: "/feed", icon: <House aria-hidden /> },
-    { label: "Mis artículos", to: "/listings", icon: <Tags aria-hidden />, count: listingsCount },
+    {
+      label: "Mis artículos",
+      to: "/listings",
+      icon: <Tags aria-hidden />,
+      count: pendingSales,
+      countLabel: pendingSales ? pendingSalesLabel(pendingSales) : undefined,
+    },
     { label: "Cuenta", to: "/account", icon: <UserRound aria-hidden /> },
   ]
 }
@@ -41,7 +51,11 @@ function DesktopNav({ activeTo, items = defaultNavItems() }: AppNavProps) {
                 to={item.to}
                 active={item.to === activeTo}
                 icon={item.icon}
-                trailing={item.count ? <CountBadge>{item.count}</CountBadge> : undefined}
+                trailing={
+                  item.count ? (
+                    <CountBadge label={item.countLabel}>{item.count}</CountBadge>
+                  ) : undefined
+                }
               >
                 {item.label}
               </SegmentedItem>
@@ -73,7 +87,10 @@ function BottomNav({ activeTo, items = defaultNavItems() }: AppNavProps) {
                 <span className="relative [&_svg]:size-5">
                   {item.icon}
                   {!!item.count && (
-                    <CountBadge className="absolute -top-1.5 -right-2.5 text-count">
+                    <CountBadge
+                      label={item.countLabel}
+                      className="absolute -top-1.5 -right-2.5 text-count"
+                    >
                       {item.count}
                     </CountBadge>
                   )}

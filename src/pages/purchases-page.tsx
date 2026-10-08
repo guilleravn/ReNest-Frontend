@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CircleAlert } from 'lucide-react'
-import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
+import { BottomNav, DesktopNav, defaultNavItems } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ListingRow, ListingRowGrid } from '@/components/listing/listing-row'
@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { SegmentedControl, SegmentedItem } from '@/components/ui/segmented-control'
 import { formatPickupTime, formatPrice } from '@/lib/format'
+import { usePendingSalesCount } from '@/lib/pending-sales'
 import { getMyPurchases, type Purchase, type PurchaseStatus } from '@/lib/purchases'
 
 /** The outcome of one request; `key` says which tab and attempt it answers. */
@@ -23,6 +24,7 @@ type Result =
  * going back from a recap returns to the same tab.
  */
 export function PurchasesPage() {
+  const navItems = defaultNavItems(usePendingSalesCount())
   const [params, setParams] = useSearchParams()
   const tab: PurchaseStatus = params.get('tab') === 'completed' ? 'COMPLETED' : 'IN_PROGRESS'
   const [attempt, setAttempt] = useState(0)
@@ -51,7 +53,7 @@ export function PurchasesPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader bordered={false} />
-      <DesktopNav activeTo="/purchases" />
+      <DesktopNav activeTo="/purchases" items={navItems} />
       <PageContainer bottomSpace="nav" className="space-y-6">
         <PageHeader title="Recogidas y compras" />
 
@@ -130,7 +132,7 @@ export function PurchasesPage() {
           </ListingRowGrid>
         )}
       </PageContainer>
-      <BottomNav activeTo="/purchases" />
+      <BottomNav activeTo="/purchases" items={navItems} />
     </div>
   )
 }

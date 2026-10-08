@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
-import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
+import { BottomNav, DesktopNav, defaultNavItems } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { Avatar } from '@/components/ui/avatar'
@@ -9,9 +9,11 @@ import { Card } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
 import { useAuth } from '@/lib/auth-context'
 import { cityLabel } from '@/lib/cities'
+import { usePendingSalesCount } from '@/lib/pending-sales'
 
 /** Reached only through RequireAuth, which already shows the loading and error states of the session. */
 export function AccountPage() {
+  const navItems = defaultNavItems(usePendingSalesCount())
   const navigate = useNavigate()
   const { user: me, signOut } = useAuth()
 
@@ -25,7 +27,7 @@ export function AccountPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader bordered={false} />
-      <DesktopNav activeTo="/account" />
+      <DesktopNav activeTo="/account" items={navItems} />
       <PageContainer width="narrow" bottomSpace="nav" className="space-y-6">
         <PageHeader title="Cuenta" />
 
@@ -58,7 +60,7 @@ export function AccountPage() {
           Cerrar sesión
         </Button>
       </PageContainer>
-      <BottomNav activeTo="/account" />
+      <BottomNav activeTo="/account" items={navItems} />
     </div>
   )
 }
