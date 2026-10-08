@@ -12,6 +12,8 @@ type ConfirmDialogProps = {
   confirmLabel: ReactNode
   cancelLabel?: ReactNode
   onConfirm: () => void
+  /** While the confirmed action runs: disables the confirm button so it can't be sent twice. */
+  pending?: boolean
   /** Extra content between the description and the actions. */
   children?: ReactNode
 }
@@ -28,6 +30,7 @@ function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Ahora no",
   onConfirm,
+  pending = false,
   children,
 }: ConfirmDialogProps) {
   return (
@@ -49,7 +52,7 @@ function ConfirmDialog({
           )}
           {children && <div className="mt-4">{children}</div>}
           <div className="mt-4 flex flex-col gap-2.5">
-            <Button fullWidth onClick={onConfirm}>
+            <Button fullWidth onClick={onConfirm} disabled={pending} aria-busy={pending}>
               {confirmLabel}
             </Button>
             <Button variant="ghost" fullWidth onClick={() => onOpenChange(false)}>

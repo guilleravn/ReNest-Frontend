@@ -37,3 +37,15 @@ export interface ReservationDetail {
 export function getReservation(id: string): Promise<ReservationDetail> {
   return api<ReservationDetail>(`/reservations/${encodeURIComponent(id)}`)
 }
+
+/**
+ * Reserves the listing and fixes the pickup pair in one step (RES-3).
+ * Rejections: 409 LISTING_NOT_AVAILABLE, 422 INVALID_PICKUP_OPTION,
+ * 403 CANNOT_RESERVE_OWN_LISTING, 404 LISTING_NOT_FOUND.
+ */
+export function createReservation(listingId: string, pickupOptionId: string): Promise<ReservationDetail> {
+  return api<ReservationDetail>('/reservations', {
+    method: 'POST',
+    body: { listingId, pickupOptionId },
+  })
+}
