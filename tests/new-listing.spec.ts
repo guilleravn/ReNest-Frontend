@@ -190,3 +190,97 @@ test('shows the categories loading, then an error with a retry', async ({ page }
 
   await expect(page.getByRole('group', { name: 'Categoría' }).getByRole('button', { name: 'Muebles' })).toBeVisible()
 })
+
+async function goToPickupStep(page: Page) {
+  await logIn(page)
+  await mockCategories(page)
+  await mockUploads(page)
+  await page.goto('/listings/new')
+  await fillDetails(page)
+  await page.getByRole('button', { name: 'Continuar' }).click()
+  await expect(page.getByRole('heading', { name: 'Disponibilidad de entrega' })).toBeVisible()
+}
+
+async function addPickupOption(
+  page: Page,
+  { place = 'Plaza Principal', days = ['Lun', 'Mié'], from = '18:30', to = '20:00' } = {},
+) {
+  await page.getByRole('button', { name: 'Agregar horario y lugar' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Agregar horario y lugar' })
+  await sheet.getByLabel('Punto de encuentro').fill(place)
+  for (const day of days) {
+    await sheet.getByRole('group', { name: 'Días' }).getByRole('button', { name: day }).click()
+  }
+  await sheet.getByLabel('Desde').fill(from)
+  await sheet.getByLabel('Hasta').fill(to)
+  await sheet.getByRole('button', { name: 'Agregar opción' }).click()
+}
+
+const pickupList = (page: Page) => page.getByRole('region', { name: 'Opciones de entrega' })
+
+test('adds a pickup pair with a success toast, after a public-place hint (LST-7, LST-8, LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await page.getByRole('button', { name: 'Agregar horario y lugar' }).click()
+  await expect(page.getByText('Usa solo lugares públicos', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  await addPickupOption(page)
+
+  await expect(page.getByText('Opción de entrega agregada')).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(1)
+  await expect(pickupList(page).getByText('Plaza Principal')).toBeVisible()
+  await expect(pickupList(page).getByText('los lunes y miércoles · 18:30–20:00')).toBeVisible()
+})
+
+test('shows the pair errors inline and adds nothing (LST-7)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await page.getByRole('button', { name: 'Agregar horario y lugar' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Agregar horario y lugar' })
+  await sheet.getByLabel('Punto de encuentro').fill('ab')
+  await sheet.getByRole('button', { name: 'Agregar opción' }).click()
+
+  await expect(sheet.getByText('Escribe al menos 3 caracteres')).toBeVisible()
+  await expect(sheet.getByText('Elige al menos un día')).toBeVisible()
+  await expect(sheet.getByText('Elige la hora de inicio')).toBeVisible()
+  await expect(sheet.getByText('Elige la hora de fin')).toBeVisible()
+
+  await sheet.getByLabel('Punto de encuentro').fill('Plaza Principal')
+  await sheet.getByRole('group', { name: 'Días' }).getByRole('button', { name: 'Sáb' }).click()
+  await sheet.getByLabel('Desde').fill('13:00')
+  await sheet.getByLabel('Hasta').fill('13:00')
+  await sheet.getByRole('button', { name: 'Agregar opción' }).click()
+
+  await expect(sheet.getByText('Debe ser después de la hora de inicio')).toBeVisible()
+  await sheet.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(page.getByText('Aún no agregaste opciones de entrega.')).toBeVisible()
+})
+
+test('allows at most 3 pickup pairs, with a toast for each one (LST-6, LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  for (const place of ['Plaza Principal', 'Café Toscano', 'Parque México']) {
+    await addPickupOption(page, { place })
+    await expect(page.getByText('Opción de entrega agregada')).toBeVisible()
+    await page.getByRole('button', { name: 'Cerrar' }).click()
+    await expect(page.getByText('Opción de entrega agregada')).toHaveCount(0)
+  }
+
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(3)
+  await expect(page.getByRole('button', { name: 'Agregar horario y lugar' })).toHaveCount(0)
+  await expect(page.getByText('Ya agregaste el máximo de 3 opciones.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Quitar Café Toscano' }).click()
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(2)
+  await expect(page.getByRole('button', { name: 'Agregar horario y lugar' })).toBeVisible()
+})
+
+test('keeps the details when going back to step 1 (LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await page.getByRole('button', { name: 'Volver a los datos del artículo' }).click()
+
+  await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
+  await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
+})

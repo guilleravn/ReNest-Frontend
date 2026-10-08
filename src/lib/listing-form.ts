@@ -1,4 +1,4 @@
-import type { ListingCondition, UploadedPhoto } from '@/lib/listings'
+import type { ListingCondition, UploadedPhoto, Weekday } from '@/lib/listings'
 
 // UX mirror of the publish rules (LST-1..5, GEN-2). The API enforces them.
 export const MAX_PHOTOS = 3
@@ -71,4 +71,61 @@ export function photoFileError(file: File): string | null {
   if (!PHOTO_TYPES.includes(file.type)) return 'Usa fotos JPG, PNG o WebP'
   if (file.size > MAX_PHOTO_BYTES) return 'Cada foto puede pesar hasta 5 MB'
   return null
+}
+
+// UX mirror of the pickup pair rules (LST-6, LST-7). The API enforces them.
+export const MAX_PICKUP_OPTIONS = 3
+export const LOCATION_MIN = 3
+export const LOCATION_MAX = 120
+export const WEEKDAYS: Weekday[] = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+]
+
+/** One pickup pair before publishing; times are "HH:mm". */
+export interface PickupOptionDraft {
+  locationLabel: string
+  weekdays: Weekday[]
+  startTime: string
+  endTime: string
+}
+
+export type PickupOptionErrors = Partial<Record<keyof PickupOptionDraft, string>>
+
+export const emptyPickupOption: PickupOptionDraft = {
+  locationLabel: '',
+  weekdays: [],
+  startTime: '',
+  endTime: '',
+}
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/** Field errors in Spanish; empty when the pair can be added. */
+export function validatePickupOption(draft: PickupOptionDraft): PickupOptionErrors {
+  const errors: PickupOptionErrors = {}
+  const place = draft.locationLabel.trim()
+  if (place.length < LOCATION_MIN) errors.locationLabel = `Escribe al menos ${LOCATION_MIN} caracteres`
+  else if (place.length > LOCATION_MAX) errors.locationLabel = `Usa como máximo ${LOCATION_MAX} caracteres`
+  if (draft.weekdays.length === 0) errors.weekdays = 'Elige al menos un día'
+  if (!HHMM.test(draft.startTime)) errors.startTime = 'Elige la hora de inicio'
+  if (!HHMM.test(draft.endTime)) errors.endTime = 'Elige la hora de fin'
+  else if (HHMM.test(draft.startTime) && draft.endTime <= draft.startTime) {
+    errors.endTime = 'Debe ser después de la hora de inicio'
+  }
+  return errors
+}
+
+/** Trimmed, with the days in calendar order. */
+export function normalizePickupOption(draft: PickupOptionDraft): PickupOptionDraft {
+  return {
+    ...draft,
+    locationLabel: draft.locationLabel.trim(),
+    weekdays: WEEKDAYS.filter((day) => draft.weekdays.includes(day)),
+  }
 }
