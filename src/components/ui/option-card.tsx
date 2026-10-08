@@ -43,7 +43,7 @@ function OptionCard({
       <span
         className={cn(
           "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center border",
-          isRadio ? "rounded-full" : "rounded-md",
+          isRadio ? "rounded-full" : "rounded-xs",
           selected
             ? "border-green-strong bg-green-strong text-text-inverse"
             : "border-border-strong"
