@@ -66,7 +66,9 @@ Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no na
 | `SellerCard` | Seller on the item detail page | `name`, `avatarSrc`, `verified`, `rating`, `reviews`, `location` |
 | `PickupSummaryCard` | Other person + agreed pickup + WhatsApp/Map actions | `personRole`, `personName`, `personDetail`, `pickupPlace`, `pickupTime`, `whatsappHref`, `mapHref` |
 | `PickupSlotItem`, `PickupSlotList` | Pickup times added by the seller | `place`, `time`, `onRemove` |
-| `PhotoUploader` | New listing photos | `photos`, `onAdd(files)`, `onRemove(index)`, `max` |
+| `PickupOptionSheet` | "Agregar horario y lugar": place (with the public-place hint), day chips and time range, validated inline (new listing step 2, pickup times) | `open`, `onOpenChange`, `onAdd(option)` (valid, trimmed, days in calendar order) |
+| `PhotoUploader` | New listing photos | `photos`, `onAdd(files)`, `onRemove(index)`, `max`, `uploading` (spinner tiles), `coverLabel` ("Portada" on the first), `accept` |
+| `ListingDetailsForm` | Photos, title, category, condition, price and description of a listing (new listing step 1; reusable prefilled for editing) | `form` (from `useListingDetailsForm(initialValues)` in `src/lib`, which holds the state, uploads and UX validation), `categories` (loading · error with `onRetry` · ready) |
 
 ## Notes
 

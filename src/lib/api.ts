@@ -37,15 +37,17 @@ export async function api<T>(
   path: string,
   { method = 'GET', body }: RequestOptions = {},
 ): Promise<T> {
+  // FormData goes as multipart; the browser sets its Content-Type with the boundary.
+  const isForm = body instanceof FormData
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   })
 
   const payload: unknown = await response.json().catch(() => null)

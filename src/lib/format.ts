@@ -43,6 +43,21 @@ const WEEKDAY_LABELS: Record<Weekday, string> = {
   SUNDAY: 'domingos',
 }
 
+const WEEKDAY_SHORT_LABELS: Record<Weekday, string> = {
+  MONDAY: 'Lun',
+  TUESDAY: 'Mar',
+  WEDNESDAY: 'Mié',
+  THURSDAY: 'Jue',
+  FRIDAY: 'Vie',
+  SATURDAY: 'Sáb',
+  SUNDAY: 'Dom',
+}
+
+/** Day picker chip: "Lun", "Mié". */
+export function weekdayShortLabel(day: Weekday): string {
+  return WEEKDAY_SHORT_LABELS[day]
+}
+
 const listFormat = new Intl.ListFormat('es', { type: 'conjunction' })
 
 /** "los lunes y miércoles · 18:30–20:00" */

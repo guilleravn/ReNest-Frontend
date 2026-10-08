@@ -257,10 +257,20 @@ export function UiKitFormsPage() {
 
       <Section
         name="PhotoUploader"
-        varies="photos (number of thumbnails), max (the 'Agregar' tile hides when reached), addLabel."
+        varies="photos (number of thumbnails), max (the 'Agregar' tile hides when reached), addLabel, uploading (spinner tiles), coverLabel."
         fixed="3-column grid (4 on desktop), square thumbnails with × button and a dashed add tile."
       >
         <Demos cols={3}>
+          <Demo props='photos={[…1]} uploading={1} coverLabel="Portada" max={3}' className="block">
+            <PhotoUploader
+              photos={[img("vintage-turntable.jpg")]}
+              uploading={1}
+              coverLabel="Portada"
+              max={3}
+              onAdd={() => {}}
+              onRemove={() => {}}
+            />
+          </Demo>
           <Demo props="photos={[]}" className="block">
             <PhotoUploader photos={[]} onAdd={() => {}} onRemove={() => {}} />
           </Demo>
