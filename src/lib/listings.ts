@@ -61,3 +61,46 @@ export interface ListingDetail {
 export function getListing(id: string): Promise<ListingDetail> {
   return api<ListingDetail>(`/listings/${encodeURIComponent(id)}`)
 }
+
+/** Feed card (API contract §2). `city` is the seller's city. */
+export interface ListingCard {
+  id: string
+  title: string
+  priceCents: number
+  condition: ListingCondition
+  category: Category
+  status: ListingStatus
+  coverPhotoUrl: string
+  city: City
+  sellerIsVerified: boolean
+  publishedAt: string
+}
+
+export interface FeedPage {
+  data: ListingCard[]
+  /** null on the last page. */
+  nextCursor: string | null
+}
+
+export interface FeedQuery {
+  /** 2–60 characters; omit to list everything (BRW-2). */
+  q?: string
+  /** Category slug. */
+  category?: string
+  cursor?: string
+}
+
+/** Active listings, newest first, 20 per page (BRW-1, BRW-10). */
+export function getFeed({ q, category, cursor }: FeedQuery = {}): Promise<FeedPage> {
+  const params = new URLSearchParams()
+  if (q) params.set('q', q)
+  if (category) params.set('category', category)
+  if (cursor) params.set('cursor', cursor)
+  const query = params.toString()
+  return api<FeedPage>(`/listings${query ? `?${query}` : ''}`)
+}
+
+/** Sorted by name (BRW-3). */
+export function getCategories(): Promise<Category[]> {
+  return api<Category[]>('/categories')
+}

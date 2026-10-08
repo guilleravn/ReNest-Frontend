@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { PublicOnly, RequireAuth } from '@/components/layout/route-guards'
-import { HomePage } from '@/pages/home-page'
 import { FeedPage } from '@/pages/feed-page'
 import { ItemDetailPage } from '@/pages/item-detail-page'
 import { ItemSchedulePickupPage } from '@/pages/item-schedule-pickup-page'
@@ -25,7 +24,7 @@ import { UiKitDomainPage } from '@/pages/ui-kit/domain-page'
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<Navigate to="/feed" replace />} />
       <Route element={<PublicOnly />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
