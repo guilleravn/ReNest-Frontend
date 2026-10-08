@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Bell, CircleAlert, PackageCheck, PackageOpen, Plus, Tags } from 'lucide-react'
-import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
+import { BottomNav, DesktopNav, defaultNavItems } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ListingRow, ListingRowGrid } from '@/components/listing/listing-row'
@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { SegmentedControl, SegmentedItem } from '@/components/ui/segmented-control'
 import { conditionLabel, formatPrice } from '@/lib/format'
 import { getMyListings, type ListingStatus, type MyListing } from '@/lib/listings'
+import { usePendingSalesCount } from '@/lib/pending-sales'
 
 type State =
   | { status: 'loading' }
@@ -48,6 +49,7 @@ function parseTab(value: string | null): ListingStatus {
 
 /** Seller tabs: Activos, En proceso and Completados (SAL-1). */
 export function ListingsPage() {
+  const navItems = defaultNavItems(usePendingSalesCount())
   const [searchParams] = useSearchParams()
   const tab = parseTab(searchParams.get('status'))
   const [attempt, setAttempt] = useState(0)
@@ -71,7 +73,7 @@ export function ListingsPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader bordered={false} />
-      <DesktopNav activeTo="/listings" />
+      <DesktopNav activeTo="/listings" items={navItems} />
       <PageContainer bottomSpace="nav" className="space-y-5">
         <PageHeader title="Mis artículos" />
 
@@ -130,7 +132,7 @@ export function ListingsPage() {
       <FloatingActionButton to="/listings/new" icon={<Plus className="size-4" aria-hidden />}>
         Nuevo artículo
       </FloatingActionButton>
-      <BottomNav activeTo="/listings" />
+      <BottomNav activeTo="/listings" items={navItems} />
     </div>
   )
 }

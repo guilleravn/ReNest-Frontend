@@ -49,7 +49,8 @@ test('has the Activos, En proceso and Completados tabs, opening on Activos (SAL-
   )
   await expect(page.getByText('Activo', { exact: true })).toBeVisible()
   await expect(page.getByText('Muebles · Poco uso')).toBeVisible()
-  expect(new Set(requested)).toEqual(new Set(['ACTIVE']))
+  // PENDING feeds the Pending marker; COMPLETED is not loaded until opened.
+  await expect.poll(() => new Set(requested)).toEqual(new Set(['ACTIVE', 'PENDING']))
 })
 
 test('shows Pending listings with a bell marker, the buyer and the place (SAL-2)', async ({ page }) => {
@@ -114,7 +115,7 @@ test('falls back to Activos for an unknown tab', async ({ page }) => {
 
   await expect(tabs(page).getByRole('link', { name: 'Activos' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByText('Lámpara de pie de latón')).toBeVisible()
-  expect(new Set(requested)).toEqual(new Set(['ACTIVE']))
+  await expect.poll(() => new Set(requested)).toEqual(new Set(['ACTIVE', 'PENDING']))
 })
 
 test('shows a loading state while a tab loads', async ({ page }) => {

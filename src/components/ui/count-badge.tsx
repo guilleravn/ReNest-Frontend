@@ -28,13 +28,19 @@ const countBadgeVariants = cva(
 
 type CountBadgeProps = VariantProps<typeof countBadgeVariants> & {
   children: ReactNode
+  /** Accessible name ("1 venta pendiente"). Without it the number is read as is. */
+  label?: string
   className?: string
 }
 
 /** Small round counter ("1") used on nav items, icons and chips. */
-function CountBadge({ children, tone, size, className }: CountBadgeProps) {
+function CountBadge({ children, label, tone, size, className }: CountBadgeProps) {
   return (
-    <span className={cn(countBadgeVariants({ tone, size }), className)}>
+    <span
+      role={label ? "img" : undefined}
+      aria-label={label}
+      className={cn(countBadgeVariants({ tone, size }), className)}
+    >
       {children}
     </span>
   )

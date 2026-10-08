@@ -15,7 +15,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `Button`, `ButtonLink`, `ButtonAnchor` | Every action. `ButtonLink` = in-app route, `ButtonAnchor` = external link | `variant`: primary · outline · secondary · ghost; `size`: lg (h-12) · md (h-11); `fullWidth` |
 | `Badge` | Condition ("Poco uso"), status ("Activo") | `tone`: green · blue · amber · verified · error · neutral; `size`: md · sm |
 | `VerifiedBadge` | "Vendedor verificado" | `variant`: soft · overlay (on top of a photo) |
-| `CountBadge` | Counters ("1") on nav items and chips | `tone`: green · amber · inverse; `size` |
+| `CountBadge` | Counters ("1") on nav items and chips | `tone`: green · amber · inverse; `size`; `label` (accessible name, e.g. "1 venta pendiente") |
 | `Chip`, `ChipGroup` | Feed filters, category/condition choices, weekdays | `selected`; `variant`: solid · soft; `shape`: pill · square; `size`: sm · md; `count` |
 | `SegmentedControl`, `SegmentedItem` | Tabs like "Agendadas / Completadas" | `active`, `icon`, `trailing`, `to` (link) or `onClick` |
 | `SearchInput` | Feed search box | `value`, `onChange`, `onClear` |
@@ -47,7 +47,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | --- | --- | --- |
 | `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
 | `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `bordered`, `menuItems`, `loginState` |
-| `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
+| `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(pendingSales)`: Pending sales counter on "Mis artículos", from `usePendingSalesCount()`) |
 | `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
 | `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (two-button `StickyActionBar`) · none |

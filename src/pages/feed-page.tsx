@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CircleAlert } from 'lucide-react'
-import { BottomNav, DesktopNav } from '@/components/layout/app-nav'
+import { BottomNav, DesktopNav, defaultNavItems } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ProductCard, ProductGrid } from '@/components/listing/product-card'
@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { SearchInput } from '@/components/ui/search-input'
 import { cityLabel } from '@/lib/cities'
+import { usePendingSalesCount } from '@/lib/pending-sales'
 import { conditionLabel, conditionTone, formatPrice } from '@/lib/format'
 import {
   getCategories,
@@ -43,6 +44,7 @@ function searchTerm(text: string): string {
  * and category live in the URL, so going back from a listing keeps them.
  */
 export function FeedPage() {
+  const navItems = defaultNavItems(usePendingSalesCount())
   const [params, setParams] = useSearchParams()
   const q = searchTerm(params.get('q') ?? '')
   const category = params.get('category') ?? ''
@@ -147,7 +149,7 @@ export function FeedPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader bordered={false} />
-      <DesktopNav activeTo="/feed" />
+      <DesktopNav activeTo="/feed" items={navItems} />
       <PageContainer bottomSpace="nav" className="space-y-6">
         <PageHeader title="Encuentra algo de segunda mano" />
 
@@ -259,7 +261,7 @@ export function FeedPage() {
           </>
         )}
       </PageContainer>
-      <BottomNav activeTo="/feed" />
+      <BottomNav activeTo="/feed" items={navItems} />
     </div>
   )
 }

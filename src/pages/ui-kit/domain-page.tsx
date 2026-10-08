@@ -292,7 +292,7 @@ export function UiKitDomainPage() {
 
       <Section
         name="DesktopNav / BottomNav"
-        varies="activeTo (active tab), items (defaultNavItems(count) shows the counter on 'Mis artículos')."
+        varies="activeTo (active tab), items (defaultNavItems(pendingSales) shows the Pending sales counter on 'Mis artículos')."
         fixed="DesktopNav only shows from sm up; BottomNav only on mobile (forced visible here)."
       >
         <Demos cols={2}>
