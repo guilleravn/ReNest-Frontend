@@ -20,7 +20,7 @@ test('logs out and sends to login when the API rejects the token, then returns (
   )
   await page.goto('/account')
 
-  await expect(page).toHaveURL(/\/login\?next=%2Faccount$/)
+  await expect(page).toHaveURL(/\/login$/)
   expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
 
   await page.getByLabel('Correo').fill('laura@example.com')
@@ -40,7 +40,7 @@ test('treats an expired token as logged out before any request (AUTH-6)', async 
   }, fakeJwt(-60))
   await page.goto('/listings/new')
 
-  await expect(page).toHaveURL(/\/login\?next=%2Flistings%2Fnew$/)
+  await expect(page).toHaveURL(/\/login$/)
   expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
 })
 
@@ -48,5 +48,22 @@ test('treats an unreadable token as logged out (AUTH-6)', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('renest.accessToken', 'not-a-jwt'))
   await page.goto('/listings/new')
 
-  await expect(page).toHaveURL(/\/login\?next=%2Flistings%2Fnew$/)
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('logs out and sends to login when the token expires while the app is open (AUTH-6)', async ({
+  page,
+}) => {
+  await page.clock.install()
+  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
+  await page.route('**/api/v1/me', (route) =>
+    route.fulfill({ status: 200, json: authResponse.user }),
+  )
+  await page.goto('/account')
+  await expect(page.getByText('laura@example.com')).toBeVisible()
+
+  await page.clock.fastForward('25:00:00')
+
+  await expect(page).toHaveURL(/\/login$/)
+  expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
 })

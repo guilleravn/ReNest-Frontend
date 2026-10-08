@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
@@ -9,8 +9,8 @@ import { TextLink } from '@/components/ui/text-link'
 import { Toast, ToastViewport } from '@/components/ui/toast'
 import { ApiError } from '@/lib/api'
 import { ErrorCode } from '@/lib/error-codes'
-import { safeNext, withNext } from '@/lib/redirect'
 import { login } from '@/lib/auth'
+import { useAuth } from '@/lib/auth-context'
 
 // Login never says which field was wrong: input the API rejects (e.g. a
 // password over 72 characters) gets the same message as wrong credentials.
@@ -27,9 +27,8 @@ function errorMessage(error: unknown): string {
 }
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const next = searchParams.get('next')
+  const location = useLocation()
+  const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -40,8 +39,8 @@ export function LoginPage() {
     setSubmitting(true)
     setError(null)
     try {
-      await login(email, password)
-      navigate(safeNext(next), { replace: true })
+      const { user } = await login(email, password)
+      signIn(user)
     } catch (err) {
       setError(errorMessage(err))
       setSubmitting(false)
@@ -53,7 +52,7 @@ export function LoginPage() {
       <AuthLayout
         footer={
           <>
-            ¿No tienes cuenta? <TextLink to={withNext('/register', next)}>Regístrate</TextLink>
+            ¿No tienes cuenta? <TextLink to="/register" state={location.state}>Regístrate</TextLink>
           </>
         }
       >

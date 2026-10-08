@@ -96,7 +96,7 @@ test('sends a logged-out visitor to login when asking a question, then back (BRW
 
   await page.getByRole('link', { name: '¿Preguntas sobre este producto?' }).click()
 
-  await expect(page).toHaveURL(`/login?next=${encodeURIComponent(`${DETAIL}/contact`)}`)
+  await expect(page).toHaveURL("/login")
 })
 
 test('treats a session the API rejects as a visitor instead of sending to login (GEN-5)', async ({ page }) => {

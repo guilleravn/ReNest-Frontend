@@ -47,6 +47,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | --- | --- | --- |
 | `AppHeader` | Top bar: logo, "Mis compras", account menu (only "Entrar" when logged out) | `user` (omit when logged out), `loginTo`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos / Cuenta tabs (desktop) and bottom tab bar (mobile) | `activeTo`, `items` (`defaultNavItems(listingsCount)`) |
+| `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
 | `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (two-button `StickyActionBar`) · none |
 

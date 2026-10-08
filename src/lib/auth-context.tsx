@@ -45,11 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => (getToken() ? LOADING : ANONYMOUS))
   const [attempt, setAttempt] = useState(0)
 
+  // Subscribed before loading, so a token found expired there still ends the session.
+  useEffect(() => onSessionExpired(() => setState(ANONYMOUS)), [])
+
   useEffect(() => {
-    if (!getToken()) {
-      setState(ANONYMOUS)
-      return
-    }
+    if (!getToken()) return
     let cancelled = false
     getMe()
       .then((user) => {
@@ -64,8 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [attempt])
-
-  useEffect(() => onSessionExpired(() => setState(ANONYMOUS)), [])
 
   // The token can run out while the app stays open without making a request.
   const authenticated = state.status === 'authenticated'

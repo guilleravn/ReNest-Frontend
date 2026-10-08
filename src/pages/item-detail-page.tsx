@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { PageContainer } from '@/components/layout/page-container'
@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { InfoPanel } from '@/components/ui/info-panel'
 import { StickyActionBar } from '@/components/ui/sticky-action-bar'
 import { ApiError } from '@/lib/api'
-import { getSessionUser, logout, type Me } from '@/lib/auth'
+import { useAuth } from '@/lib/auth-context'
 import { cityLabel } from '@/lib/cities'
 import {
   conditionLabel,
@@ -21,8 +21,6 @@ import {
   formatSellerRating,
 } from '@/lib/format'
 import { getListing, type ListingDetail } from '@/lib/listings'
-import { loginPath } from '@/lib/redirect'
-import { getToken } from '@/lib/session'
 
 type State =
   | { status: 'loading' }
@@ -37,12 +35,10 @@ const UNAVAILABLE_NOTE = {
 
 export function ItemDetailPage() {
   const { id = '' } = useParams()
-  const location = useLocation()
   const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
-  const [me, setMe] = useState<Me | null>(null)
-  const [loggedIn, setLoggedIn] = useState(() => getToken() !== null)
+  const { user: me, signOut } = useAuth()
 
   useEffect(() => {
     let current = true
@@ -59,28 +55,13 @@ export function ItemDetailPage() {
     }
   }, [id, attempt])
 
-  useEffect(() => {
-    let current = true
-    getSessionUser().then(
-      (user) => {
-        if (!current) return
-        setMe(user)
-        setLoggedIn(user !== null)
-      },
-      () => {},
-    )
-    return () => {
-      current = false
-    }
-  }, [])
-
   function retry() {
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
   }
 
   function handleLogout() {
-    logout()
+    signOut()
     navigate('/login', { replace: true })
   }
 
@@ -91,12 +72,8 @@ export function ItemDetailPage() {
     <div className="flex min-h-dvh flex-col">
       <AppHeader
         backTo="/feed"
-        user={
-          loggedIn
-            ? { name: me?.fullName ?? '', email: me?.email, verified: me?.isVerified }
-            : undefined
-        }
-        loginTo={loginPath(location.pathname)}
+        user={me ? { name: me.fullName, email: me.email, verified: me.isVerified } : undefined}
+        loginTo="/login"
         onLogout={handleLogout}
       />
       <PageContainer width="medium" bottomSpace={showActions ? 'actions' : 'default'}>
