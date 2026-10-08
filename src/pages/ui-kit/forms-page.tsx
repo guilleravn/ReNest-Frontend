@@ -27,7 +27,8 @@ export function UiKitFormsPage() {
   const [ratings, setRatings] = useState([0, 3, 5])
   const [photos, setPhotos] = useState<string[]>([img("wooden-dresser.jpg"), img("wooden-dresser-2.jpg")])
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [confirm, setConfirm] = useState<null | "default" | "custom" | "children">(null)
+  const [confirm, setConfirm] = useState<null | "default" | "custom" | "children" | "pending">(null)
+  const [demoSaving, setDemoSaving] = useState(false)
   const [bar, setBar] = useState<BarMode>("off")
   const [fab, setFab] = useState(false)
 
@@ -317,7 +318,7 @@ export function UiKitFormsPage() {
 
       <Section
         name="ConfirmDialog"
-        varies="title, description, confirmLabel, cancelLabel, children (extra content), pending (confirm disabled while the action runs)."
+        varies="title, description, confirmLabel, cancelLabel, pending (saving), children (extra content)."
         fixed="Slides up on mobile, centered on desktop; primary button + ghost cancel button."
       >
         <Demos cols={3}>
@@ -333,6 +334,11 @@ export function UiKitFormsPage() {
           </Demo>
           <Demo props="with children">
             <Button variant="outline" size="md" onClick={() => setConfirm("children")}>
+              Open
+            </Button>
+          </Demo>
+          <Demo props="pending (simulated 1.5 s save after confirm)">
+            <Button variant="outline" size="md" onClick={() => setConfirm("pending")}>
               Open
             </Button>
           </Demo>
@@ -430,6 +436,21 @@ export function UiKitFormsPage() {
       >
         <Textarea rows={3} placeholder="ej. Ya no lo necesito" />
       </ConfirmDialog>
+      <ConfirmDialog
+        open={confirm === "pending"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="¿Confirmar la entrega?"
+        description="Hazlo solo cuando el comprador ya tenga el artículo. El artículo pasará a Completados."
+        confirmLabel="Sí, ya lo entregué"
+        pending={demoSaving}
+        onConfirm={() => {
+          setDemoSaving(true)
+          setTimeout(() => {
+            setDemoSaving(false)
+            setConfirm(null)
+          }, 1500)
+        }}
+      />
 
       {bar !== "off" && (
         <StickyActionBar

@@ -1,10 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
-import { internalError } from './fixtures/listings'
+import { internalError, ownListingDetail } from './fixtures/listings'
 import {
   completedSale,
+  handoverAlreadyConfirmedError,
   pendingSale,
   reservationNotFoundError,
+  unauthorizedError,
   type SaleFixture,
 } from './fixtures/reservations'
 
@@ -48,7 +50,7 @@ test('shows a Pending sale: buyer, WhatsApp, pickup pair, Maps and "Confirmar en
   )
   await expect(page.getByText('1 de octubre de 2026')).toBeVisible()
   await expect(page.getByText('Entregado el')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Confirmar entrega' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Confirmar entrega' })).toBeEnabled()
   await expect(page.getByRole('link', { name: 'Volver' })).toHaveAttribute(
     'href',
     '/listings?status=PENDING',
@@ -158,4 +160,103 @@ test('sends me to login when my session expired', async ({ page }) => {
   await page.goto(SALE)
 
   await expect(page).toHaveURL(/\/login/)
+})
+
+test.describe('confirming the handover (SAL-4)', () => {
+  const HANDOVER = `${API}/handover`
+
+  test('asks for confirmation in a modal and does nothing when I back out', async ({ page }) => {
+    await logIn(page)
+    await mockSale(page, pendingSale)
+    let posted = false
+    await page.route(HANDOVER, (route) => {
+      posted = true
+      return route.fulfill({ status: 200, json: completedSale })
+    })
+
+    await page.goto(SALE)
+    await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+
+    const dialog = page.getByRole('dialog', { name: '¿Confirmar la entrega?' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(/El artículo pasará a Completados\./)).toBeVisible()
+    await dialog.getByRole('button', { name: 'Ahora no' }).click()
+    await expect(dialog).toBeHidden()
+    expect(posted).toBe(false)
+  })
+
+  test('confirms the handover and lands on "Venta completada"', async ({ page }) => {
+    await logIn(page)
+    await mockSale(page, pendingSale)
+    let release!: () => void
+    const held = new Promise<void>((resolve) => (release = resolve))
+    let method: string | undefined
+    await page.route(HANDOVER, async (route) => {
+      method = route.request().method()
+      await held
+      await route.fulfill({ status: 200, json: completedSale })
+    })
+    await page.route(`**/api/v1/listings/${pendingSale.listing.id}`, (route) =>
+      route.fulfill({
+        status: 200,
+        json: { ...ownListingDetail, id: pendingSale.listing.id, status: 'COMPLETED' },
+      }),
+    )
+
+    await page.goto(SALE)
+    await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+    const dialog = page.getByRole('dialog', { name: '¿Confirmar la entrega?' })
+    await dialog.getByRole('button', { name: 'Sí, ya lo entregué' }).click()
+
+    await expect(dialog.getByRole('button', { name: 'Sí, ya lo entregué' })).toBeDisabled()
+    await expect(dialog.getByRole('button', { name: 'Ahora no' })).toBeDisabled()
+    release()
+    await expect(page).toHaveURL(`/listings/${pendingSale.listing.id}/sale-completed`)
+    await expect(page.getByRole('heading', { name: '¡Venta completada!' })).toBeVisible()
+    expect(method).toBe('POST')
+  })
+
+  test('explains that the handover was already confirmed and shows the completed sale (409)', async ({ page }) => {
+    await logIn(page)
+    let sale: SaleFixture = pendingSale
+    await page.route(API, (route) => route.fulfill({ status: 200, json: sale }))
+    await page.route(HANDOVER, (route) => {
+      sale = completedSale
+      return route.fulfill({ status: 409, json: handoverAlreadyConfirmedError })
+    })
+
+    await page.goto(SALE)
+    await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+    await page.getByRole('button', { name: 'Sí, ya lo entregué' }).click()
+
+    await expect(page.getByText('Ya habías confirmado esta entrega.')).toBeVisible()
+    await expect(page.getByText('Venta completada')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Confirmar entrega' })).toHaveCount(0)
+  })
+
+  test('explains when the handover cannot be saved and lets me try again', async ({ page }) => {
+    await logIn(page)
+    await mockSale(page, pendingSale)
+    await page.route(HANDOVER, (route) => route.fulfill({ status: 500, json: internalError }))
+
+    await page.goto(SALE)
+    await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+    await page.getByRole('button', { name: 'Sí, ya lo entregué' }).click()
+
+    await expect(page.getByText('No pudimos confirmar la entrega. Inténtalo de nuevo.')).toBeVisible()
+    await expect(page).toHaveURL(SALE)
+    await expect(page.getByRole('button', { name: 'Confirmar entrega' })).toBeEnabled()
+  })
+
+  test('sends me to login when my session expired while confirming (401)', async ({ page }) => {
+    await logIn(page)
+    await mockSale(page, pendingSale)
+    await page.route(HANDOVER, (route) => route.fulfill({ status: 401, json: unauthorizedError }))
+
+    await page.goto(SALE)
+    await page.getByRole('button', { name: 'Confirmar entrega' }).click()
+    await page.getByRole('button', { name: 'Sí, ya lo entregué' }).click()
+
+    await expect(page).toHaveURL(/\/login/)
+  })
 })

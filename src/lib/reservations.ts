@@ -49,3 +49,13 @@ export function createReservation(listingId: string, pickupOptionId: string): Pr
     body: { listingId, pickupOptionId },
   })
 }
+
+/**
+ * Seller only. Moves the listing to Completed; the buyer's purchase doesn't
+ * change. A second confirmation gets 409 HANDOVER_ALREADY_CONFIRMED.
+ */
+export function confirmHandover(id: string): Promise<ReservationDetail> {
+  return api<ReservationDetail>(`/reservations/${encodeURIComponent(id)}/handover`, {
+    method: 'POST',
+  })
+}

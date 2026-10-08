@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { PickupSummaryCard } from '@/components/listing/pickup-summary-card'
 import { ProductSummary } from '@/components/listing/product-summary'
 import { Button, ButtonLink } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { InfoPanel } from '@/components/ui/info-panel'
 import { StickyActionBar } from '@/components/ui/sticky-action-bar'
+import { Toast, ToastViewport } from '@/components/ui/toast'
 import { ApiError } from '@/lib/api'
+import { ErrorCode } from '@/lib/error-codes'
 import { conditionLabel, formatDate, formatPickupTime, formatPrice } from '@/lib/format'
 import { mapsHref } from '@/lib/maps'
-import { getReservation, type ReservationDetail } from '@/lib/reservations'
+import { confirmHandover, getReservation, type ReservationDetail } from '@/lib/reservations'
 import { saleMessage, whatsappHref } from '@/lib/whatsapp'
 
 type State =
@@ -21,11 +24,17 @@ type State =
   | { status: 'not-found' }
   | { status: 'ready'; sale: ReservationDetail }
 
-/** A Pending or Completed listing as its seller sees it (SAL-3, SAL-5). */
+type Notice = { tone: 'success' | 'error'; text: string }
+
+/** A Pending or Completed listing as its seller sees it (SAL-3, SAL-4, SAL-5). */
 export function SaleDetailPage() {
   const { reservationId = '' } = useParams()
+  const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  const [confirming, setConfirming] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [notice, setNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
     let current = true
@@ -45,6 +54,27 @@ export function SaleDetailPage() {
   function retry() {
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
+  }
+
+  async function handOver(sale: ReservationDetail) {
+    setSaving(true)
+    setNotice(null)
+    try {
+      await confirmHandover(sale.id)
+      navigate(`/listings/${sale.listing.id}/sale-completed`)
+    } catch (error) {
+      setSaving(false)
+      setConfirming(false)
+      const code = error instanceof ApiError ? error.code : null
+      if (code === ErrorCode.HANDOVER_ALREADY_CONFIRMED) {
+        setNotice({ tone: 'success', text: 'Ya habías confirmado esta entrega.' })
+        // Reload in place so the sale shows as completed.
+        setAttempt((n) => n + 1)
+      } else if (code !== ErrorCode.UNAUTHORIZED) {
+        // A 401 needs nothing here: the expired session already sends the user to login.
+        setNotice({ tone: 'error', text: 'No pudimos confirmar la entrega. Inténtalo de nuevo.' })
+      }
+    }
   }
 
   const sale = state.status === 'ready' ? state.sale : null
@@ -154,12 +184,31 @@ export function SaleDetailPage() {
         )}
       </PageContainer>
 
-      {canConfirmHandover && (
-        <StickyActionBar>
-          <Button fullWidth disabled>
-            Confirmar entrega
-          </Button>
-        </StickyActionBar>
+      {sale && canConfirmHandover && (
+        <>
+          <StickyActionBar>
+            <Button fullWidth onClick={() => setConfirming(true)}>
+              Confirmar entrega
+            </Button>
+          </StickyActionBar>
+          <ConfirmDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            title="¿Confirmar la entrega?"
+            description="Hazlo solo cuando el comprador ya tenga el artículo. El artículo pasará a Completados."
+            confirmLabel="Sí, ya lo entregué"
+            pending={saving}
+            onConfirm={() => handOver(sale)}
+          />
+        </>
+      )}
+
+      {notice && (
+        <ToastViewport>
+          <Toast tone={notice.tone} onDismiss={() => setNotice(null)}>
+            {notice.text}
+          </Toast>
+        </ToastViewport>
       )}
     </div>
   )
