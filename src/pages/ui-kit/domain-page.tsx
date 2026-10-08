@@ -271,7 +271,7 @@ export function UiKitDomainPage() {
 
       <Section
         name="AppHeader"
-        varies="bordered, backTo (back arrow, mobile only), purchasesCount, user (avatarSrc, verified, email, location), menuItems, onLogout."
+        varies="bordered, backTo (back arrow, mobile only), purchasesCount, user (avatarSrc, verified, email, location; omit when logged out), loginTo, menuItems, onLogout."
         fixed="Logo on the left, 'Mis compras' and avatar menu on the right, 64px tall. (Sticky to the top in the app.)"
       >
         <Demos cols={1}>
@@ -283,6 +283,9 @@ export function UiKitDomainPage() {
           </Demo>
           <Demo props='backTo="/feed" (shrink the window to see the arrow)' className={staticHeader}>
             <AppHeader backTo="/feed" user={{ name: "Tú" }} purchasesCount={3} />
+          </Demo>
+          <Demo props="no user (logged out) · loginTo" className={staticHeader}>
+            <AppHeader backTo="/feed" loginTo="/login" />
           </Demo>
         </Demos>
       </Section>
