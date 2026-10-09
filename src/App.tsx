@@ -20,6 +20,7 @@ import { SaleDetailPage } from '@/pages/sale-detail-page'
 import { LoginPage } from '@/pages/login-page'
 import { RegisterPage } from '@/pages/register-page'
 import { AccountPage } from '@/pages/account-page'
+import { NotFoundPage } from '@/pages/not-found-page'
 import { UiKitPrimitivesPage } from '@/pages/ui-kit/primitives-page'
 import { UiKitFormsPage } from '@/pages/ui-kit/forms-page'
 import { UiKitDomainPage } from '@/pages/ui-kit/domain-page'
@@ -58,6 +59,7 @@ function App() {
       <Route path="/ui-kit/primitives" element={<UiKitPrimitivesPage />} />
       <Route path="/ui-kit/forms" element={<UiKitFormsPage />} />
       <Route path="/ui-kit/domain" element={<UiKitDomainPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
