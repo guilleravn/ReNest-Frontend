@@ -28,7 +28,7 @@ type State =
   | { status: 'ready'; listing: ListingDetail }
 
 const UNAVAILABLE_NOTE = {
-  PENDING: 'Otra persona ya lo reservó.',
+  PENDING: 'Este artículo ya está reservado.',
   COMPLETED: 'Este artículo ya se vendió.',
 } as const
 

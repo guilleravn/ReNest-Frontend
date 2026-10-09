@@ -19,11 +19,27 @@ test.use({ viewport: { width: 375, height: 812 } })
 
 const LISTING_ID = listingDetailForBuyer.id
 const PICKUP = `/items/${LISTING_ID}/pickup`
+const PURCHASE = `/purchases/${reservationDetail.id}`
 
 async function mockListing(page: Page, listing: ListingDetailFixture = listingDetailForBuyer) {
   await page.route(`**/api/v1/listings/${listing.id}`, (route) =>
     route.fulfill({ status: 200, json: listing }),
   )
+}
+
+/** The new purchase, as the recap page loads it after reserving. */
+async function mockPurchase(page: Page) {
+  await page.route(`**/api/v1/reservations/${reservationDetail.id}`, (route) =>
+    route.fulfill({ status: 200, json: reservationDetail }),
+  )
+}
+
+async function mockReservationCreated(page: Page, onCreate = () => {}) {
+  await page.route('**/api/v1/reservations', (route) => {
+    onCreate()
+    return route.fulfill({ status: 201, json: reservationDetail })
+  })
+  await mockPurchase(page)
 }
 
 const confirmButton = (page: Page) => page.getByRole('button', { name: 'Confirmar recogida' })
@@ -71,9 +87,10 @@ test('asks for confirmation before reserving and does nothing on "Ahora no" (RES
   expect(posted).toBe(false)
 })
 
-test('reserves with the chosen pair and shows the pickup summary with Maps and WhatsApp (RES-3, RES-7)', async ({ page }) => {
+test('reserves with the chosen pair and lands on the purchase with Maps and WhatsApp (RES-3, RES-7)', async ({ page }) => {
   await logIn(page)
   await mockListing(page)
+  await mockPurchase(page)
   let body: unknown
   await page.route('**/api/v1/reservations', (route) => {
     body = route.request().postDataJSON()
@@ -83,7 +100,9 @@ test('reserves with the chosen pair and shows the pickup summary with Maps and W
 
   await chooseAndConfirm(page, 'Plaza Principal')
 
+  await expect(page).toHaveURL(PURCHASE)
   await expect(page.getByRole('heading', { name: '¡Listo, es tuyo!' })).toBeVisible()
+  await expect(page.getByText('Recogida agendada', { exact: true })).toHaveCount(1)
   expect(body).toEqual({
     listingId: LISTING_ID,
     pickupOptionId: listingDetailForBuyer.pickupOptions[1].id,
@@ -106,9 +125,7 @@ test('reserves with the chosen pair and shows the pickup summary with Maps and W
 test('"Ver más productos" returns to the feed (RES-8)', async ({ page }) => {
   await logIn(page)
   await mockListing(page)
-  await page.route('**/api/v1/reservations', (route) =>
-    route.fulfill({ status: 201, json: reservationDetail }),
-  )
+  await mockReservationCreated(page)
   await mockEmptyFeed(page)
   await page.goto(PICKUP)
   await chooseAndConfirm(page, 'Plaza Principal')
@@ -116,6 +133,42 @@ test('"Ver más productos" returns to the feed (RES-8)', async ({ page }) => {
   await page.getByRole('link', { name: 'Ver más productos' }).click()
 
   await expect(page).toHaveURL('/feed')
+})
+
+test('keeps the purchase on reload after reserving', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page)
+  await mockReservationCreated(page)
+  await page.goto(PICKUP)
+  await chooseAndConfirm(page, 'Plaza Principal')
+  await expect(page).toHaveURL(PURCHASE)
+
+  await page.reload()
+
+  await expect(page).toHaveURL(PURCHASE)
+  await expect(page.getByRole('link', { name: 'WhatsApp' })).toBeVisible()
+})
+
+test('going back after reserving shows the listing as reserved, not taken by someone else', async ({ page }) => {
+  await logIn(page)
+  let reserved = false
+  await page.route(`**/api/v1/listings/${LISTING_ID}`, (route) =>
+    route.fulfill({
+      status: 200,
+      json: reserved ? { ...listingDetailForBuyer, status: 'PENDING' } : listingDetailForBuyer,
+    }),
+  )
+  await mockReservationCreated(page, () => (reserved = true))
+  await page.goto(`/items/${LISTING_ID}`)
+  await page.getByRole('link', { name: 'Agendar recogida' }).click()
+  await chooseAndConfirm(page, 'Plaza Principal')
+  await expect(page).toHaveURL(PURCHASE)
+
+  await page.goBack()
+
+  await expect(page).toHaveURL(`/items/${LISTING_ID}`)
+  await expect(page.getByText('Este artículo ya está reservado.')).toBeVisible()
+  await expect(page.getByText('Otra persona', { exact: false })).toHaveCount(0)
 })
 
 test('sends a logged-out visitor to login first (RES-1)', async ({ page }) => {
@@ -264,6 +317,7 @@ test('sends back to the listing when the API says it is your own (RES-4)', async
 test('keeps the choice and lets the buyer try again when the reservation fails', async ({ page }) => {
   await logIn(page)
   await mockListing(page)
+  await mockPurchase(page)
   let apiDown = true
   await page.route('**/api/v1/reservations', (route) =>
     apiDown

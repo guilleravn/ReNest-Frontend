@@ -106,7 +106,7 @@ test('treats a session the API rejects as a visitor instead of sending to login 
 })
 
 for (const [status, note] of [
-  ['PENDING', 'Otra persona ya lo reservó.'],
+  ['PENDING', 'Este artículo ya está reservado.'],
   ['COMPLETED', 'Este artículo ya se vendió.'],
 ] as const) {
   test(`still opens a ${status} listing, says it is no longer available and hides "Agendar recogida" (BRW-8)`, async ({ page }) => {

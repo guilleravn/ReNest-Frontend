@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { CircleAlert, MessageCircle, PackageX } from 'lucide-react'
-import { AppHeader } from '@/components/layout/app-header'
 import { PageContainer } from '@/components/layout/page-container'
+import { SessionHeader } from '@/components/layout/session-header'
 import { SellerCard } from '@/components/listing/seller-card'
 import { Button, ButtonAnchor, ButtonLink } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -10,7 +10,6 @@ import { FormField } from '@/components/ui/form-field'
 import { Textarea } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { ApiError } from '@/lib/api'
-import { getMe, logout, type Me } from '@/lib/auth'
 import { cityLabel } from '@/lib/cities'
 import { formatPrice, formatSellerRating } from '@/lib/format'
 import { getListing, type ListingDetail } from '@/lib/listings'
@@ -31,7 +30,6 @@ export function ItemContactPage() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const [message, setMessage] = useState('')
-  const [me, setMe] = useState<Me | null>(null)
 
   useEffect(() => {
     let current = true
@@ -45,7 +43,9 @@ export function ItemContactPage() {
           navigate('/login', { replace: true, state: { from: location.pathname } })
           return
         }
-        if (listing.viewer.isSeller) {
+        // Only an Active listing of someone else can be asked about (BRW-8, BRW-9);
+        // its detail page explains why not.
+        if (listing.status !== 'ACTIVE' || listing.viewer.isSeller) {
           navigate(`/items/${listing.id}`, { replace: true })
           return
         }
@@ -69,36 +69,16 @@ export function ItemContactPage() {
     }
   }, [id, attempt, location.pathname, navigate])
 
-  useEffect(() => {
-    let current = true
-    getMe().then(
-      (user) => current && setMe(user),
-      () => {},
-    )
-    return () => {
-      current = false
-    }
-  }, [])
-
   function retry() {
     setState({ status: 'loading' })
     setAttempt((n) => n + 1)
-  }
-
-  function handleLogout() {
-    logout()
-    navigate('/login', { replace: true })
   }
 
   const listing = state.status === 'ready' ? state.listing : null
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader
-        backTo={`/items/${id}`}
-        user={{ name: me?.fullName ?? '', email: me?.email, verified: me?.isVerified }}
-        onLogout={handleLogout}
-      />
+      <SessionHeader backTo={`/items/${id}`} />
       <PageContainer width="narrow" className="space-y-6">
         {state.status === 'loading' && (
           <p role="status" className="py-16 text-center text-sm text-text-muted">

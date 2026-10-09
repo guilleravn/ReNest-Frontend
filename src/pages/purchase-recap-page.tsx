@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
@@ -26,9 +26,12 @@ type State =
  * Pickup recap of one purchase: the item, the seller with WhatsApp, the agreed
  * pickup pair and a Maps link (PUR-3). The server says which actions apply
  * (`actions`); the seller's handover never hides the buyer's (PUR-2, PUR-4).
+ * Right after reserving it also confirms the reservation and offers the feed
+ * (RES-7, RES-8).
  */
 export function PurchaseRecapPage() {
   const { id = '' } = useParams()
+  const justReserved = (useLocation().state as { justReserved?: boolean } | null)?.justReserved === true
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
@@ -100,6 +103,13 @@ export function PurchaseRecapPage() {
 
         {purchase && (
           <>
+            {justReserved && (
+              <PageHeader
+                title="¡Listo, es tuyo!"
+                description="Escríbele al vendedor para acordar el día exacto. Encontrarás esta reserva en Mis compras."
+              />
+            )}
+
             <div className="overflow-hidden rounded-2xl border border-border bg-surface-sunken">
               <img
                 src={purchase.listing.coverPhotoUrl}
@@ -146,6 +156,12 @@ export function PurchaseRecapPage() {
               )}
               mapHref={mapsHref(purchase.pickupOption.locationLabel)}
             />
+
+            {justReserved && (
+              <ButtonLink to="/feed" variant="secondary" fullWidth>
+                Ver más productos
+              </ButtonLink>
+            )}
           </>
         )}
       </PageContainer>

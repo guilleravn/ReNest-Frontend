@@ -20,6 +20,17 @@ async function mockReservation(page: Page, detail: ReservationDetailFixture) {
   )
 }
 
+test('shows no "just reserved" banner when opened from My Purchases', async ({ page }) => {
+  await logIn(page)
+  await mockReservation(page, reservationDetail)
+
+  await page.goto(RECAP)
+
+  await expect(page.getByRole('heading', { name: 'Aparador de teca mediados de siglo' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '¡Listo, es tuyo!' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Ver más productos' })).toHaveCount(0)
+})
+
 const received = {
   ...reservationDetail,
   buyerReceivedAt: '2026-10-09T12:00:00.000Z',
