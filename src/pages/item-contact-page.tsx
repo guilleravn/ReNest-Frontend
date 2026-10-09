@@ -43,7 +43,9 @@ export function ItemContactPage() {
           navigate('/login', { replace: true, state: { from: location.pathname } })
           return
         }
-        if (listing.viewer.isSeller) {
+        // Only an Active listing of someone else can be asked about (BRW-8, BRW-9);
+        // its detail page explains why not.
+        if (listing.status !== 'ACTIVE' || listing.viewer.isSeller) {
           navigate(`/items/${listing.id}`, { replace: true })
           return
         }

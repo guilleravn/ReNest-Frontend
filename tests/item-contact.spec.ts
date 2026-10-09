@@ -95,6 +95,18 @@ test('sends the seller back to their listing (BRW-9)', async ({ page }) => {
   await expect(page).toHaveURL(`/items/${listingDetail.id}`)
 })
 
+for (const status of ['PENDING', 'COMPLETED'] as const) {
+  test(`sends back to the listing when it is ${status} (BRW-8)`, async ({ page }) => {
+    await logIn(page)
+    await mockListing(page, { ...listingDetailForBuyer, status })
+
+    await page.goto(CONTACT)
+
+    await expect(page).toHaveURL(`/items/${listingDetail.id}`)
+    await expect(page.getByText('Ya no está disponible')).toBeVisible()
+  })
+}
+
 test('shows an error with a retry when the listing fails to load', async ({ page }) => {
   await logIn(page)
   let apiDown = true
