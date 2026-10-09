@@ -261,6 +261,16 @@ export function FeedPage() {
                 </Button>
               }
             />
+          ) : city ? (
+            <EmptyState
+              title={`No hay artículos en ${cityLabel(city)}`}
+              description="Mira lo que se publica en otras ciudades."
+              action={
+                <Button size="md" variant="secondary" onClick={() => setFilters({ city: ALL_CITIES })}>
+                  Ver todas las ubicaciones
+                </Button>
+              }
+            />
           ) : (
             <EmptyState
               title="Todavía no hay artículos"

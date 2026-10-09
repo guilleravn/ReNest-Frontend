@@ -471,3 +471,42 @@ test.describe('city filter (BRW-11)', () => {
     expect(requests.every((url) => !url.searchParams.has('city'))).toBe(true)
   })
 })
+
+test.describe('empty feed in a city (BRW-11)', () => {
+  test('names the city and offers to see every city (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, (url) =>
+      url.searchParams.has('city') ? [] : [lampCard],
+    )
+    await page.goto('/feed')
+
+    await expect(page.getByText('No hay artículos en Cochabamba, BO')).toBeVisible()
+    await page.getByRole('button', { name: 'Ver todas las ubicaciones' }).click()
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('all')
+    await expect(page).toHaveURL(/[?&]city=all(&|$)/)
+    expect(requests.at(-1)?.searchParams.has('city')).toBe(false)
+  })
+
+  test('with a search or category, keeps "No encontramos artículos" (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    await mockSearch(page, () => [])
+
+    await page.goto('/feed?category=hogar')
+
+    await expect(page.getByText('No encontramos artículos')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ver todas las ubicaciones' })).toHaveCount(0)
+  })
+
+  test('with every city, keeps "Todavía no hay artículos" (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    await mockSearch(page, () => [])
+
+    await page.goto('/feed?city=all')
+
+    await expect(page.getByText('Todavía no hay artículos')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ver todas las ubicaciones' })).toHaveCount(0)
+  })
+})
