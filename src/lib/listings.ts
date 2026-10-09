@@ -183,3 +183,30 @@ export function updateListing(id: string, update: ListingUpdate): Promise<Listin
     body: update,
   })
 }
+
+/** POST /listings/:listingId/pickup-options body: one pair, without its id. */
+export type PickupOptionInput = Omit<PickupOption, 'id'>
+
+/**
+ * Adds a pickup pair to an Active listing (SAL-6). Errors: 400 VALIDATION_ERROR,
+ * 403 NOT_LISTING_OWNER, 404 LISTING_NOT_FOUND, 409 LISTING_NOT_EDITABLE,
+ * 409 PICKUP_OPTION_LIMIT.
+ */
+export function addPickupOption(listingId: string, option: PickupOptionInput): Promise<PickupOption> {
+  return api<PickupOption>(`/listings/${encodeURIComponent(listingId)}/pickup-options`, {
+    method: 'POST',
+    body: option,
+  })
+}
+
+/**
+ * Removes a pickup pair from an Active listing (SAL-6). Errors:
+ * 403 NOT_LISTING_OWNER, 404 LISTING_NOT_FOUND, 404 PICKUP_OPTION_NOT_FOUND,
+ * 409 LISTING_NOT_EDITABLE, 409 LAST_PICKUP_OPTION.
+ */
+export async function removePickupOption(listingId: string, pickupOptionId: string): Promise<void> {
+  await api<null>(
+    `/listings/${encodeURIComponent(listingId)}/pickup-options/${encodeURIComponent(pickupOptionId)}`,
+    { method: 'DELETE' },
+  )
+}

@@ -74,8 +74,22 @@ test('opens the edit form from my Active listing (C3)', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Editar artículo' })).toBeVisible()
 })
 
+test('opens the pickup times from my Active listing (SAL-6)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page, ownListingDetail)
+
+  await page.goto(DETAIL)
+  await page
+    .getByRole('region', { name: 'Tus lugares y horarios de recogida' })
+    .getByRole('link', { name: 'Configurar mis horarios' })
+    .click()
+
+  await expect(page).toHaveURL(`${DETAIL}/pickup-times`)
+  await expect(page.getByRole('heading', { name: 'Mis horarios de recogida' })).toBeVisible()
+})
+
 for (const status of ['PENDING', 'COMPLETED'] as const) {
-  test(`hides the edit action when the listing is ${status} (LST-11)`, async ({ page }) => {
+  test(`hides the edit and pickup times actions when the listing is ${status} (LST-11, C2)`, async ({ page }) => {
     await logIn(page)
     await mockListing(page, {
       ...ownListingDetail,
@@ -88,6 +102,7 @@ for (const status of ['PENDING', 'COMPLETED'] as const) {
 
     await expect(page.getByText('Este artículo ya no está activo')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Editar artículo' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Configurar mis horarios' })).toHaveCount(0)
   })
 }
 
