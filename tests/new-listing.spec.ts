@@ -288,6 +288,48 @@ test('keeps the details when going back to step 1 (LST-9)', async ({ page }) => 
   await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
 })
 
+test('browser back on step 2 returns to step 1 with the data intact, and forward keeps the pickup pairs (LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+  await expect(page).toHaveURL('/listings/new?step=2')
+  await addPickupOption(page, { place: 'Plaza Principal' })
+
+  await page.goBack()
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
+  await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
+
+  await page.goForward()
+
+  await expect(page.getByText('Paso 2 de 2')).toBeVisible()
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(1)
+})
+
+test('the header arrow on step 2 returns to step 1 with the data intact (LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await page.getByRole('button', { name: 'Volver', exact: true }).click()
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
+
+  // Going back a step pops the history entry instead of adding one.
+  await page.goBack()
+  await expect(page).not.toHaveURL(/step=2/)
+})
+
+test('opening step 2 without the details lands on step 1 (LST-9)', async ({ page }) => {
+  await logIn(page)
+  await mockCategories(page)
+
+  await page.goto('/listings/new?step=2')
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+})
+
 /** Answers POST /listings with `response` and keeps the bodies it got. */
 async function mockPublish(page: Page, response: { status: number; json: unknown }) {
   const bodies: unknown[] = []

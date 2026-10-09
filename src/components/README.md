@@ -45,8 +45,8 @@ Text content (price, category, condition, location, status) is passed in as alre
 
 | Component | Used for | Key props |
 | --- | --- | --- |
-| `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
-| `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `bordered`, `menuItems`, `loginState` |
+| `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `onBack` (back arrow that runs a callback, e.g. a wizard step; wins over `backTo`), `bordered`, `menuItems`, `onLogout` |
+| `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `onBack`, `bordered`, `menuItems`, `loginState` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos tabs (desktop) and bottom tab bar (mobile) | `activeTo` (optional; omit for no active tab), `items` (`defaultNavItems(pendingSales)`: Pending sales counter on "Mis artículos", from `usePendingSalesCount()`) |
 | `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
