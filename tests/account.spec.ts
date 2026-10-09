@@ -4,6 +4,8 @@ import { authResponse } from './fixtures/auth'
 test.use({ viewport: { width: 375, height: 812 } })
 
 async function logIn(page: Page) {
+  // The nav's pending sales count; unmocked, it reaches the real API and its 401 ends the session.
+  await page.route('**/api/v1/me/listings?*', (route) => route.fulfill({ status: 200, json: [] }))
   await page.addInitScript((token) => {
     if (!sessionStorage.getItem('seeded')) {
       localStorage.setItem('renest.accessToken', token)
