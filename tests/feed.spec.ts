@@ -9,6 +9,7 @@ import {
   sideboardCard,
 } from './fixtures/feed'
 import { logIn } from './fixtures/session'
+import { expectTapTarget } from './fixtures/tap-target'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -238,6 +239,7 @@ test('the clear button in the search box removes the search (BRW-2)', async ({ p
   await page.goto('/feed?q=teca')
   const search = page.getByRole('searchbox', { name: 'Buscar por título' })
   await expect(search).toHaveValue('teca')
+  await expectTapTarget(page.getByRole('button', { name: 'Borrar búsqueda' }))
 
   await page.getByRole('button', { name: 'Borrar búsqueda' }).click()
 

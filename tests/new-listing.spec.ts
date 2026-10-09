@@ -15,6 +15,7 @@ import {
 } from './fixtures/new-listing'
 import { logIn } from './fixtures/session'
 import { expectNotCoveredByActionBar } from './fixtures/action-bar'
+import { expectTapTarget } from './fixtures/tap-target'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -318,6 +319,18 @@ test('the header arrow on step 2 returns to step 1 with the data intact (LST-9)'
   // Going back a step pops the history entry instead of adding one.
   await page.goBack()
   await expect(page).not.toHaveURL(/step=2/)
+})
+
+test('the remove-photo, remove-pickup and close-toast buttons are at least 44px', async ({ page }) => {
+  await goToPickupStep(page)
+  await addPickupOption(page, { place: 'Plaza Principal' })
+
+  // First, while the toast that the add shows is still up (it leaves after 4s).
+  await expectTapTarget(page.getByRole('button', { name: 'Cerrar' }))
+  await expectTapTarget(page.getByRole('button', { name: 'Quitar Plaza Principal' }))
+
+  await page.getByRole('button', { name: 'Volver a los datos del artículo' }).click()
+  await expectTapTarget(page.getByRole('button', { name: 'Quitar foto 1' }))
 })
 
 test('opening step 2 without the details lands on step 1 (LST-9)', async ({ page }) => {

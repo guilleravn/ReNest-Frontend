@@ -75,4 +75,5 @@ Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no na
 - Import `cn` from `@/lib/utils` (not from `"cn"` directly). It knows that `text-button`, `text-label`, `text-badge` and `text-count` are font sizes. If you add another `--text-*` token, register it there.
 - `h2`, `h3` and `h4` use the serif font (`--font-heading`) by default. Add `font-sans` when a heading should be sans (like the product title in `ProductSummary`).
 - Icons: `lucide-react`.
+- Icon-only buttons have a hit area of at least 44×44px (`size-11`) and a `focus-visible` outline. When the icon must look smaller, keep the visible shape inside the button or use negative margins so the layout doesn't move (`PhotoUploader`, `PickupSlotItem`, `Toast`, `SearchInput`).
 - User-facing copy is in Spanish; code, comments and docs are in English.

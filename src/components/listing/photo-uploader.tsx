@@ -53,9 +53,12 @@ function PhotoUploader({
             type="button"
             aria-label={`Quitar foto ${index + 1}`}
             onClick={() => onRemove(index)}
-            className="absolute top-1 right-1 inline-flex size-6 items-center justify-center rounded-full bg-foreground/55 text-text-inverse transition-colors hover:bg-foreground/75"
+            className="group/remove absolute top-0 right-0 inline-flex size-11 items-start justify-end rounded-lg p-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
           >
-            <X className="size-3.5" aria-hidden />
+            {/* 44px hit area around the 24px visible circle. */}
+            <span className="inline-flex size-6 items-center justify-center rounded-full bg-foreground/55 text-text-inverse transition-colors group-hover/remove:bg-foreground/75">
+              <X className="size-3.5" aria-hidden />
+            </span>
           </button>
         </div>
       ))}

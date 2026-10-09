@@ -31,7 +31,7 @@ function PickupSlotItem({ place, time, onRemove, removeDisabled = false }: Picku
           aria-label={`Quitar ${place}`}
           onClick={onRemove}
           disabled={removeDisabled}
-          className="shrink-0 rounded-md p-1 text-text-muted transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-text-muted"
+          className="-my-2 -mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:text-error focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-text-muted"
         >
           <Trash2 className="size-4" aria-hidden />
         </button>
