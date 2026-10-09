@@ -18,14 +18,21 @@ import {
 type PickupOptionSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Called with a valid, trimmed pair; the sheet closes itself. */
-  onAdd: (option: PickupOptionDraft) => void
+  /**
+   * Called with a valid, trimmed pair; the sheet then closes itself. When it
+   * returns a promise, the sheet waits for it; if it resolves to a message
+   * (e.g. the save failed), the sheet stays open with the draft and shows it.
+   * A rejected promise keeps it open too, with a generic error.
+   */
+  onAdd: (option: PickupOptionDraft) => void | Promise<string | void>
 }
 
 /** "Agregar horario y lugar": one public place, its days and a time range (LST-7, LST-8). */
 function PickupOptionSheet({ open, onOpenChange, onAdd }: PickupOptionSheetProps) {
   const [draft, setDraft] = useState(emptyPickupOption)
   const [errors, setErrors] = useState<PickupOptionErrors>({})
+  const [saving, setSaving] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
 
   function update<K extends keyof PickupOptionDraft>(field: K, value: PickupOptionDraft[K]) {
     setDraft((prev) => ({ ...prev, [field]: value }))
@@ -33,19 +40,41 @@ function PickupOptionSheet({ open, onOpenChange, onAdd }: PickupOptionSheetProps
   }
 
   function close(next: boolean) {
-    if (!next) {
-      setDraft(emptyPickupOption)
-      setErrors({})
-    }
+    if (saving) return
+    if (!next) reset()
     onOpenChange(next)
   }
 
-  function submit() {
+  function reset() {
+    setDraft(emptyPickupOption)
+    setErrors({})
+    setFailure(null)
+  }
+
+  async function submit() {
     const found = validatePickupOption(draft)
     setErrors(found)
+    setFailure(null)
     if (Object.keys(found).length > 0) return
-    onAdd(normalizePickupOption(draft))
-    close(false)
+    const result = onAdd(normalizePickupOption(draft))
+    if (result instanceof Promise) {
+      setSaving(true)
+      let message: string | void
+      try {
+        message = await result
+      } catch {
+        // A rejected save must not leave the sheet stuck in "Agregando…".
+        message = "No pudimos agregar la opción. Inténtalo de nuevo."
+      } finally {
+        setSaving(false)
+      }
+      if (message) {
+        setFailure(message)
+        return
+      }
+    }
+    reset()
+    onOpenChange(false)
   }
 
   return (
@@ -56,16 +85,21 @@ function PickupOptionSheet({ open, onOpenChange, onAdd }: PickupOptionSheetProps
       description="El comprador elegirá entre las opciones que agregues."
       footer={
         <>
-          <Button variant="ghost" fullWidth onClick={() => close(false)}>
+          <Button variant="ghost" fullWidth disabled={saving} onClick={() => close(false)}>
             Cancelar
           </Button>
-          <Button fullWidth onClick={submit}>
-            Agregar opción
+          <Button fullWidth disabled={saving} aria-busy={saving} onClick={submit}>
+            {saving ? "Agregando…" : "Agregar opción"}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
+        {failure && (
+          <p role="alert" className="text-sm font-medium text-error">
+            {failure}
+          </p>
+        )}
         <FormField
           label="Punto de encuentro"
           htmlFor="pickup-place"

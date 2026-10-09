@@ -7,10 +7,12 @@ type PickupSlotItemProps = {
   time: ReactNode
   /** Shows a trash button when provided. */
   onRemove?: () => void
+  /** Keeps the trash button visible but disabled (e.g. the listing's last pair). */
+  removeDisabled?: boolean
 }
 
-/** One pickup time/place option the seller added (new listing, step 2). */
-function PickupSlotItem({ place, time, onRemove }: PickupSlotItemProps) {
+/** One pickup time/place option the seller added (new listing step 2, pickup times). */
+function PickupSlotItem({ place, time, onRemove, removeDisabled = false }: PickupSlotItemProps) {
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
       <div className="min-w-0 flex-1">
@@ -28,7 +30,8 @@ function PickupSlotItem({ place, time, onRemove }: PickupSlotItemProps) {
           type="button"
           aria-label={`Quitar ${place}`}
           onClick={onRemove}
-          className="shrink-0 rounded-md p-1 text-text-muted transition-colors hover:text-error"
+          disabled={removeDisabled}
+          className="shrink-0 rounded-md p-1 text-text-muted transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-text-muted"
         >
           <Trash2 className="size-4" aria-hidden />
         </button>

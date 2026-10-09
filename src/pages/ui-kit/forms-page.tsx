@@ -294,14 +294,24 @@ export function UiKitFormsPage() {
 
       <Section
         name="PickupSlotItem"
-        varies="place, time, onRemove (shows the trash button)."
+        varies="place, time, onRemove (shows the trash button), removeDisabled."
         fixed="Gray box, location pin and clock."
       >
-        <Demos cols={2}>
+        <Demos cols={3}>
           <Demo props="with onRemove" className="block">
             <PickupSlotList>
               <PickupSlotItem place="Parque México" time="los lunes · 18:00–20:00" onRemove={() => {}} />
               <PickupSlotItem place="Café Toscano, Av. Álvaro Obregón" time="los sábados · 10:00–13:00" onRemove={() => {}} />
+            </PickupSlotList>
+          </Demo>
+          <Demo props="removeDisabled (last pair)" className="block">
+            <PickupSlotList>
+              <PickupSlotItem
+                place="Parque México"
+                time="los lunes · 18:00–20:00"
+                onRemove={() => {}}
+                removeDisabled
+              />
             </PickupSlotList>
           </Demo>
           <Demo props="without onRemove" className="block">
