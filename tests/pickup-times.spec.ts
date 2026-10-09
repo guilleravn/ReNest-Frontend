@@ -1,5 +1,4 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
 import { listingNotEditableError } from './fixtures/edit-listing'
 import {
   internalError,
@@ -17,22 +16,13 @@ import {
   pendingOwnListing,
   pickupOptionLimitError,
 } from './fixtures/pickup-times'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const PICKUP_TIMES = `/listings/${listingDetail.id}/pickup-times`
 const PAIRS = `**/api/v1/listings/${listingDetail.id}/pickup-options`
 const [cafe, plaza] = ownListingDetail.pickupOptions
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 /**
  * Answers GET /listings/:id with `server.listing`; a test changes it to

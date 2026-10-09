@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
 import { internalError } from './fixtures/listings'
 import { activeItem, completedItem, pendingItem } from './fixtures/my-listings'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -9,16 +9,6 @@ const BY_STATUS: Record<string, unknown[]> = {
   ACTIVE: [activeItem],
   PENDING: [pendingItem],
   COMPLETED: [completedItem],
-}
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
 }
 
 /** Answers each tab from `data`, and records the requested statuses. */

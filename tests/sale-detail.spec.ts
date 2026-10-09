@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
 import { internalError, ownListingDetail } from './fixtures/listings'
 import {
   completedSale,
@@ -9,21 +8,12 @@ import {
   unauthorizedError,
   type SaleFixture,
 } from './fixtures/reservations'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const SALE = `/sales/${pendingSale.id}`
 const API = `**/api/v1/reservations/${pendingSale.id}`
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 async function mockSale(page: Page, sale: SaleFixture) {
   await page.route(API, (route) => route.fulfill({ status: 200, json: sale }))

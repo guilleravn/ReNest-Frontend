@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -44,10 +45,7 @@ for (const path of ['/purchases/7/checklist', '/purchases/7/rate', '/listings/7'
 }
 
 test('lets a logged-in user straight into a protected action', async ({ page }) => {
-  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+  await logIn(page)
   await page.goto('/listings/new')
 
   await expect(page).toHaveURL(/\/listings\/new$/)

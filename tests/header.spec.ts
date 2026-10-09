@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -11,10 +12,7 @@ test('offers login to an anonymous visitor', async ({ page }) => {
 })
 
 test('shows the account menu to a logged-in user and logs out from it', async ({ page }) => {
-  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+  await logIn(page)
   await page.goto('/feed')
 
   await page.getByRole('button', { name: 'Mi cuenta' }).click()
@@ -27,7 +25,7 @@ test('shows the account menu to a logged-in user and logs out from it', async ({
 })
 
 test('shows neither the menu nor the login button while the session loads', async ({ page }) => {
-  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
+  await logIn(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route('**/api/v1/me', async (route) => {

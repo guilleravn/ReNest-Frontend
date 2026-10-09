@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
 import {
   internalError,
   listingDetail,
@@ -7,24 +6,13 @@ import {
   listingNotFoundError,
   type ListingDetailFixture,
 } from './fixtures/listings'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const CONTACT = `/items/${listingDetail.id}/contact`
 const PREFILLED =
   'Hola Priya Mehta, vi tu "Aparador de teca mediados de siglo" ($185) en ReNest y tengo una pregunta.'
-
-async function logIn(page: Page) {
-  await page.addInitScript((token) => {
-    if (!sessionStorage.getItem('seeded')) {
-      localStorage.setItem('renest.accessToken', token)
-      sessionStorage.setItem('seeded', '1')
-    }
-  }, authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 async function mockListing(page: Page, listing: ListingDetailFixture) {
   await page.route(`**/api/v1/listings/${listing.id}`, (route) =>

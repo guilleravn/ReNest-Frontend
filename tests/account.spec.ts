@@ -1,19 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
 import { categories, feedPage, lampCard } from './fixtures/feed'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
-
-async function logIn(page: Page) {
-  // The nav's pending sales count; unmocked, it reaches the real API and its 401 ends the session.
-  await page.route('**/api/v1/me/listings?*', (route) => route.fulfill({ status: 200, json: [] }))
-  await page.addInitScript((token) => {
-    if (!sessionStorage.getItem('seeded')) {
-      localStorage.setItem('renest.accessToken', token)
-      sessionStorage.setItem('seeded', '1')
-    }
-  }, authResponse.accessToken)
-}
 
 async function mockFeed(page: Page) {
   await page.route('**/api/v1/categories', (route) =>
