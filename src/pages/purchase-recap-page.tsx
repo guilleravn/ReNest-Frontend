@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
@@ -35,14 +35,7 @@ export function PurchaseRecapPage() {
   useEffect(() => {
     let current = true
     getReservation(id).then(
-      (purchase) =>
-        current &&
-        // The recap is the buyer's view: the seller sees a sale, not a purchase.
-        setState(
-          purchase.viewerRole === 'BUYER'
-            ? { status: 'ready', purchase }
-            : { status: 'not-found' },
-        ),
+      (purchase) => current && setState({ status: 'ready', purchase }),
       (error: unknown) =>
         current &&
         setState({
@@ -60,6 +53,12 @@ export function PurchaseRecapPage() {
   }
 
   const purchase = state.status === 'ready' ? state.purchase : null
+
+  // The seller has their own view of the same reservation.
+  if (purchase?.viewerRole === 'SELLER') {
+    return <Navigate to={`/sales/${purchase.id}`} replace />
+  }
+
   const { actions } = purchase ?? {}
   const hasAction = Boolean(actions?.canConfirmReception || actions?.canRate)
 

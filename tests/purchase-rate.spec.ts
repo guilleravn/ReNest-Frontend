@@ -235,12 +235,11 @@ test("says it doesn't exist for another user's purchase id (404)", async ({ page
   await expect(sendButton(page)).toHaveCount(0)
 })
 
-test("doesn't offer the rating to the seller of the reservation", async ({ page }) => {
+test('sends the seller of the reservation to their sale detail', async ({ page }) => {
   await logIn(page)
   await mockReservation(page, { ...receivedReservationDetail, viewerRole: 'SELLER' })
 
   await page.goto(RATE)
 
-  await expect(page.getByText('Esta compra no existe')).toBeVisible()
-  await expect(sendButton(page)).toHaveCount(0)
+  await expect(page).toHaveURL(`/sales/${RESERVATION_ID}`)
 })
