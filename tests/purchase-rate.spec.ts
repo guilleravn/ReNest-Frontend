@@ -6,6 +6,7 @@ import {
   alreadyRatedError,
   receptionChecklist,
   reservationDetail,
+  receptionNotConfirmedError,
   reservationNotFoundError,
 } from './fixtures/purchases'
 
@@ -150,6 +151,23 @@ test('explains a 409 ALREADY_RATED and links back to the purchase (PUR-8)', asyn
 
   await expect(page.getByText('Ya calificaste a este vendedor')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Ver la compra' })).toHaveAttribute('href', RECAP)
+})
+
+test('goes back to the recap on a 409 RECEPTION_NOT_CONFIRMED (PUR-8)', async ({ page }) => {
+  await logIn(page)
+  await mockReservation(page)
+  // The recap reloads the purchase, which isn't received yet.
+  await page.route(RATING_URL, async (route) => {
+    await mockReservation(page, reservationDetail)
+    return route.fulfill({ status: 409, json: receptionNotConfirmedError })
+  })
+  await page.goto(RATE)
+
+  await page.getByRole('radio', { name: '5 estrellas' }).click()
+  await sendButton(page).click()
+
+  await expect(page).toHaveURL(RECAP)
+  await expect(page.getByRole('link', { name: 'Marcar como recogido' })).toBeVisible()
 })
 
 test('shows an error and keeps the stars when the rating fails', async ({ page }) => {

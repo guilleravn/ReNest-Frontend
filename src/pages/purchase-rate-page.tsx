@@ -77,6 +77,9 @@ export function PurchaseRatePage() {
       const code = error instanceof ApiError ? error.code : null
       if (code === ErrorCode.ALREADY_RATED) {
         setState({ status: 'already-rated' })
+      } else if (code === ErrorCode.RECEPTION_NOT_CONFIRMED) {
+        // Retrying can't fix it: the recap shows what is still pending.
+        navigate(`/purchases/${purchase.id}`, { replace: true })
       } else if (code !== ErrorCode.UNAUTHORIZED) {
         // A 401 needs nothing here: the expired session already sends the user to login.
         setFailed(true)
