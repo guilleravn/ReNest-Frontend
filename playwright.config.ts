@@ -78,8 +78,9 @@ export default defineConfig({
    * running backend.
    */
   webServer: {
-    command: 'API_PROXY_TARGET=http://localhost:9 npm run dev -- --port 5175 --strictPort',
+    command: 'npm run dev -- --port 5175 --strictPort',
     url: 'http://localhost:5175',
     reuseExistingServer: false,
+    env: { API_PROXY_TARGET: 'http://localhost:9' },
   },
 });
