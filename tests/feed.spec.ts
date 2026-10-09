@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from './fixtures/test'
+import { authResponse } from './fixtures/auth'
 import {
   cards,
   categories,
@@ -7,6 +8,7 @@ import {
   lampCard,
   sideboardCard,
 } from './fixtures/feed'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -282,4 +284,229 @@ test('"Inicio" resets the search box and the category', async ({ page }) => {
   await page.clock.runFor(1000)
   await expect(page).toHaveURL(/\/feed$/)
   expect(requests.at(-1)?.search).toBe('')
+})
+
+// `logIn` is Laura, from Cochabamba (`authResponse.user.city`).
+const citySelect = (page: Page) => page.getByRole('combobox', { name: 'Ubicación' })
+
+test.describe('city filter (BRW-11)', () => {
+  test('a logged-in user starts on their own city (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, () => [sideboardCard])
+
+    await page.goto('/feed')
+
+    await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('COCHABAMBA_BO')
+    // The feed waits for the user, so no request goes out without the city.
+    expect(requests.map((url) => url.searchParams.get('city'))).toEqual(['COCHABAMBA_BO'])
+    await expect(page).toHaveURL(/\/feed$/)
+  })
+
+  test('an anonymous visitor sees every city (BRW-11)', async ({ page }) => {
+    const requests = await mockSearch(page, () => [sideboardCard, lampCard])
+
+    await page.goto('/feed')
+
+    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(2)
+    await expect(citySelect(page)).toHaveValue('all')
+    expect(requests.every((url) => !url.searchParams.has('city'))).toBe(true)
+  })
+
+  test('offers "Todas las ubicaciones" and every city by its Spanish name (BRW-11)', async ({ page }) => {
+    await mockSearch(page, () => [sideboardCard])
+
+    await page.goto('/feed')
+
+    await expect(citySelect(page).getByRole('option')).toHaveText([
+      'Todas las ubicaciones',
+      'Cochabamba, BO',
+      'Arequipa, PE',
+      'San Salvador, SV',
+      'Utah, US',
+    ])
+  })
+
+  test('picking another city filters by it and keeps it in the URL (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, (url) =>
+      url.searchParams.get('city') === 'AREQUIPA_PE' ? [lampCard] : [sideboardCard],
+    )
+    await page.goto('/feed')
+    await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+
+    await citySelect(page).selectOption({ label: 'Arequipa, PE' })
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Aparador de teca/ })).toHaveCount(0)
+    await expect(page).toHaveURL(/[?&]city=AREQUIPA_PE(&|$)/)
+    expect(requests.at(-1)?.searchParams.get('city')).toBe('AREQUIPA_PE')
+  })
+
+  test('"Todas las ubicaciones" removes the filter, also after a reload (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, (url) =>
+      url.searchParams.has('city') ? [sideboardCard] : [sideboardCard, lampCard],
+    )
+    await page.goto('/feed')
+    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(1)
+
+    await citySelect(page).selectOption({ label: 'Todas las ubicaciones' })
+
+    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(2)
+    await expect(page).toHaveURL(/[?&]city=all(&|$)/)
+    expect(requests.at(-1)?.searchParams.has('city')).toBe(false)
+
+    await page.reload()
+
+    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(2)
+    await expect(citySelect(page)).toHaveValue('all')
+    expect(requests.at(-1)?.searchParams.has('city')).toBe(false)
+  })
+
+  test('a city in the URL wins over the user\'s own city after a reload (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, () => [lampCard])
+
+    await page.goto('/feed?city=UTAH_US')
+    await page.reload()
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('UTAH_US')
+    expect(requests.every((url) => url.searchParams.get('city') === 'UTAH_US')).toBe(true)
+  })
+
+  test('an unknown city in the URL falls back to the default (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, () => [sideboardCard])
+
+    await page.goto('/feed?city=LA_PAZ_BO')
+
+    await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('COCHABAMBA_BO')
+    expect(requests.at(-1)?.searchParams.get('city')).toBe('COCHABAMBA_BO')
+  })
+
+  test('the city combines with the search and the category (BRW-2, BRW-3, BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, () => [lampCard])
+    await page.goto('/feed?city=AREQUIPA_PE')
+
+    await page.getByRole('searchbox', { name: 'Buscar por título' }).fill('lámpara')
+    await expect.poll(() => requests.at(-1)?.searchParams.get('q')).toBe('lámpara')
+    await page.getByRole('group', { name: 'Categorías' }).getByRole('button', { name: 'Hogar' }).click()
+
+    await expect.poll(() => requests.at(-1)?.searchParams.get('category')).toBe('hogar')
+    expect(Object.fromEntries(requests.at(-1)!.searchParams)).toEqual({
+      q: 'lámpara',
+      category: 'hogar',
+      city: 'AREQUIPA_PE',
+    })
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+  })
+
+  test('"Cargar más" keeps the city (BRW-10, BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests: URL[] = []
+    await mockFeed(page, (url, route) => {
+      requests.push(url)
+      return route.fulfill({
+        json: url.searchParams.has('cursor') ? feedPage(cards(1, 21)) : feedPage(cards(20), 'page-2'),
+      })
+    })
+    await page.goto('/feed')
+
+    await page.getByRole('button', { name: 'Cargar más' }).click()
+
+    await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(21)
+    expect(Object.fromEntries(requests.at(-1)!.searchParams)).toEqual({
+      city: 'COCHABAMBA_BO',
+      cursor: 'page-2',
+    })
+  })
+
+  test('"Limpiar filtros" clears the search and the category but keeps the city (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, (url) =>
+      url.searchParams.has('q') ? [] : [lampCard],
+    )
+    await page.goto('/feed?q=bicicleta&category=hogar&city=AREQUIPA_PE')
+
+    await page.getByRole('button', { name: 'Limpiar filtros' }).click()
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('AREQUIPA_PE')
+    expect(Object.fromEntries(requests.at(-1)!.searchParams)).toEqual({ city: 'AREQUIPA_PE' })
+  })
+
+  test('when the session fails to load, shows an error instead of every city, and retrying loads the own city (BRW-11)', async ({ page }) => {
+    let meFails = true
+    await logIn(page)
+    await page.route('**/api/v1/me', (route) =>
+      meFails
+        ? route.fulfill({ status: 500, json: internalError })
+        : route.fulfill({ json: authResponse.user }),
+    )
+    const requests = await mockSearch(page, () => [sideboardCard])
+    await page.goto('/feed')
+
+    await expect(page.getByText('No pudimos cargar los artículos')).toBeVisible()
+    expect(requests).toHaveLength(0)
+    meFails = false
+    await page.getByRole('button', { name: 'Reintentar' }).click()
+
+    await expect(page.getByRole('link', { name: /Aparador de teca/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('COCHABAMBA_BO')
+    expect(requests.map((url) => url.searchParams.get('city'))).toEqual(['COCHABAMBA_BO'])
+  })
+
+  test('when the session fails to load, a city in the URL still loads (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    await page.route('**/api/v1/me', (route) => route.fulfill({ status: 500, json: internalError }))
+    const requests = await mockSearch(page, () => [lampCard])
+
+    await page.goto('/feed?city=all')
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    expect(requests.every((url) => !url.searchParams.has('city'))).toBe(true)
+  })
+})
+
+test.describe('empty feed in a city (BRW-11)', () => {
+  test('names the city and offers to see every city (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    const requests = await mockSearch(page, (url) =>
+      url.searchParams.has('city') ? [] : [lampCard],
+    )
+    await page.goto('/feed')
+
+    await expect(page.getByText('No hay artículos en Cochabamba, BO')).toBeVisible()
+    await page.getByRole('button', { name: 'Ver todas las ubicaciones' }).click()
+
+    await expect(page.getByRole('link', { name: /Lámpara de pie/ })).toBeVisible()
+    await expect(citySelect(page)).toHaveValue('all')
+    await expect(page).toHaveURL(/[?&]city=all(&|$)/)
+    expect(requests.at(-1)?.searchParams.has('city')).toBe(false)
+  })
+
+  test('with a search or category, keeps "No encontramos artículos" (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    await mockSearch(page, () => [])
+
+    await page.goto('/feed?category=hogar')
+
+    await expect(page.getByText('No encontramos artículos')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ver todas las ubicaciones' })).toHaveCount(0)
+  })
+
+  test('with every city, keeps "Todavía no hay artículos" (BRW-11)', async ({ page }) => {
+    await logIn(page)
+    await mockSearch(page, () => [])
+
+    await page.goto('/feed?city=all')
+
+    await expect(page.getByText('Todavía no hay artículos')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ver todas las ubicaciones' })).toHaveCount(0)
+  })
 })
