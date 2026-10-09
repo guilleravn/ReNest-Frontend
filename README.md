@@ -58,7 +58,17 @@ The API only accepts requests from the frontend origin (`CORS_ORIGIN` in the bac
 | `build` | Type-check and build for production |
 | `preview` | Serve the production build |
 | `lint` | Lint with oxlint |
-| `test:e2e` | Playwright tests (starts the dev server automatically) |
+| `test:e2e` | Playwright tests with a mocked API (starts the dev server automatically) |
+| `test:e2e:real` | Playwright tests against the real stack (see below) |
+
+### Real-stack tests
+
+`tests/real/` runs against the real backend and database, with no mocks. It includes the end-to-end happy path (`e2e-happy-path.spec.ts`): one test follows a seller and another follows a buyer through publishing, reserving, the handover, the reception and the rating.
+
+1. In `../ReNest-Backend`, run `npm run db:up` and make sure its `.env` sets `DATABASE_URL_TEST` and `S3_BUCKET_TEST`.
+2. Here, run `npm run test:e2e:real`.
+
+The config starts its own backend on `:3100` (migrations and seed against the test database) and its own app on `:5174`, so it can run alongside the dev servers. Each run uses new accounts, so nothing needs cleaning between runs.
 
 ## Contributing
 
