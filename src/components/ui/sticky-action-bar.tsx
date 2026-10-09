@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 type StickyActionBarProps = {
@@ -12,14 +12,39 @@ type StickyActionBarProps = {
 }
 
 /**
- * Bottom bar fixed to the viewport holding the page's main action.
- * Leave bottom padding (e.g. pb-24) on the page so content isn't hidden.
+ * Bottom bar holding the page's main action. Render it as the last child of
+ * the page's `min-h-dvh flex-col` wrapper, after `PageContainer`: it sticks to
+ * the bottom of the viewport while scrolling and takes its own space at the
+ * end, so it never covers the content.
+ *
+ * It publishes its height as `--action-bar-height`, which `scroll-padding-bottom`
+ * uses so a focused field scrolls into view above the bar.
  */
 function StickyActionBar({ children, note, width = "narrow", className }: StickyActionBarProps) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const bar = ref.current
+    if (!bar) return
+    const root = document.documentElement
+    const publishHeight = () =>
+      root.style.setProperty("--action-bar-height", `${bar.offsetHeight}px`)
+    publishHeight()
+    const observer = new ResizeObserver(publishHeight)
+    observer.observe(bar)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty("--action-bar-height")
+    }
+  }, [])
+
   return (
     <div
+      ref={ref}
+      role="region"
+      aria-label="Acciones"
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur",
+        "sticky bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur",
         className
       )}
     >

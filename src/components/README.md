@@ -35,7 +35,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `Logo` | Horizontal ReNest logo | `size`: header · auth |
 | `Toast`, `ToastViewport` | Short feedback ("Sesión cerrada") | `tone`: success · error; `onDismiss` |
 | `InfoPanel` | Gray summary box ("Vendido a …") | `title`, `children` |
-| `StickyActionBar` | Fixed bottom bar with the page's main action | `width`: narrow · wide; `note` |
+| `StickyActionBar` | Bottom bar with the page's main action. Last child of the page's `min-h-dvh flex-col` wrapper: sticks to the viewport bottom and never covers content; sets `--action-bar-height` for `scroll-padding-bottom` | `width`: narrow · wide; `note` |
 | `FloatingActionButton` | "+ Nuevo artículo" | `to`, `icon` |
 | `Sheet` | Form panel: bottom sheet on mobile, right drawer on desktop | `open`, `onOpenChange`, `title`, `description`, `footer` |
 | `ConfirmDialog` | "¿Confirmar la entrega?" | `open`, `title`, `description`, `confirmLabel`, `cancelLabel`, `onConfirm`, `pending` (saving: buttons disabled, not dismissable) |
@@ -50,7 +50,7 @@ Text content (price, category, condition, location, status) is passed in as alre
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos tabs (desktop) and bottom tab bar (mobile) | `activeTo` (optional; omit for no active tab), `items` (`defaultNavItems(pendingSales)`: Pending sales counter on "Mis artículos", from `usePendingSalesCount()`) |
 | `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
-| `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (two-button `StickyActionBar`) · none |
+| `PageContainer` | Each page's `<main>` | `width`: narrow (2xl) · medium (5xl) · wide (6xl); `bottomSpace`: default · nav · actions (followed by a `StickyActionBar`) · none |
 
 Pages with `BottomNav` use `<SessionHeader bordered={false} />` + `<DesktopNav />` + `<PageContainer bottomSpace="nav">`.
 Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no nav.

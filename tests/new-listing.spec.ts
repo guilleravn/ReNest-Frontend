@@ -14,6 +14,7 @@ import {
   uploadedPhoto,
 } from './fixtures/new-listing'
 import { logIn } from './fixtures/session'
+import { expectNotCoveredByActionBar } from './fixtures/action-bar'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -448,4 +449,46 @@ test('the published page shows not-found for an unknown listing', async ({ page 
   await page.goto(`/listings/${NEW_LISTING_ID}/published`)
 
   await expect(page.getByText('Este artículo no existe')).toBeVisible()
+})
+
+test.describe('on a short phone screen', () => {
+  test.use({ viewport: { width: 375, height: 667 } })
+
+  test('the action bar never covers the description field', async ({ page }) => {
+    await logIn(page)
+    await mockCategories(page)
+
+    await page.goto('/listings/new')
+
+    await expectNotCoveredByActionBar(page, page.getByLabel('Descripción'))
+  })
+
+  test('the action bar with its note never covers the description field', async ({ page }) => {
+    await logIn(page)
+    await mockCategories(page)
+    // Leave the upload pending so the bar shows its note.
+    await page.route('**/api/v1/uploads/photos', () => {})
+
+    await page.goto('/listings/new')
+    await addPhotos(page)
+    await expect(page.getByText('Espera a que terminen de subir las fotos.')).toBeVisible()
+
+    await expectNotCoveredByActionBar(page, page.getByLabel('Descripción'))
+  })
+
+  test('the action bar never covers the end of step 2', async ({ page }) => {
+    await logIn(page)
+    await mockCategories(page)
+    await mockUploads(page)
+
+    await page.goto('/listings/new')
+    await fillDetails(page)
+    await page.getByRole('button', { name: 'Continuar' }).click()
+    await expect(page.getByText('Paso 2 de 2')).toBeVisible()
+
+    await expectNotCoveredByActionBar(
+      page,
+      page.getByRole('button', { name: 'Volver a los datos del artículo' }),
+    )
+  })
 })

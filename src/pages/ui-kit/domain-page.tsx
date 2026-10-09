@@ -313,7 +313,7 @@ export function UiKitDomainPage() {
 
       <Section
         name="PageContainer"
-        varies="width (narrow 672px · medium 1024px · wide 1152px), bottomSpace (default · nav: leaves room for the BottomNav · actions: leaves room for a two-button StickyActionBar · none)."
+        varies="width (narrow 672px · medium 1024px · wide 1152px), bottomSpace (default · nav: leaves room for the BottomNav · actions: a StickyActionBar follows · none)."
         fixed="Centered, 16px side padding (24px on desktop)."
       >
         <Demos cols={1}>
