@@ -216,6 +216,8 @@
     }
   html {
     @apply font-sans;
+    /* Set by StickyActionBar, so focused fields scroll into view above it. */
+    scroll-padding-bottom: var(--action-bar-height, 0px);
     }
   body {
     -webkit-font-smoothing: antialiased;

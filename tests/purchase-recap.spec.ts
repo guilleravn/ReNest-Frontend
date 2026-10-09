@@ -8,6 +8,7 @@ import {
   type ReservationDetailFixture,
 } from './fixtures/purchases'
 import { logIn } from './fixtures/session'
+import { expectNotCoveredByActionBar } from './fixtures/action-bar'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -47,6 +48,16 @@ test('shows the item, the seller with WhatsApp, the pickup pair and a Maps link 
     'href',
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Café Toscano, Av. Álvaro Obregón')}`,
   )
+})
+
+test('the action bar never covers the pickup card at the end of the page', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await logIn(page)
+  await mockReservation(page, reservationDetail)
+
+  await page.goto(RECAP)
+
+  await expectNotCoveredByActionBar(page, page.getByRole('link', { name: 'Mapa' }))
 })
 
 test('offers "Marcar como recogido" while reception is not confirmed (PUR-4)', async ({ page }) => {

@@ -65,7 +65,7 @@ export function PurchaseRecapPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader backTo="/purchases" />
-      <PageContainer width="narrow" bottomSpace="none" className={hasAction ? 'space-y-6 pb-32' : 'space-y-6 pb-12'}>
+      <PageContainer width="narrow" bottomSpace={hasAction ? 'actions' : 'default'} className="space-y-6">
         {state.status === 'loading' && (
           <p role="status" className="py-16 text-center text-sm text-text-muted">
             Cargando…

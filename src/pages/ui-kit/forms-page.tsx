@@ -368,7 +368,7 @@ export function UiKitFormsPage() {
       <Section
         name="StickyActionBar"
         varies="width (narrow = form width · wide = detail width, with the button centered at max-w-md), note."
-        fixed="Fixed to the bottom, translucent white background and top border."
+        fixed="Sticks to the bottom without covering content, translucent white background and top border."
       >
         <Demos cols={4}>
           {(["narrow", "wide", "note"] as const).map((mode) => (

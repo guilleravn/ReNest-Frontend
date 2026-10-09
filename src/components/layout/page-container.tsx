@@ -15,14 +15,14 @@ const pageContainerVariants = cva("mx-auto w-full flex-1 px-4 py-6 sm:px-6 sm:py
       wide: "max-w-6xl",
     },
     /**
-     * Bottom space so fixed bars don't cover content.
-     * `nav`: room for the mobile BottomNav. `actions`: room for a two-button
-     * StickyActionBar. `none`: page handles it.
+     * Bottom space before the end of the page.
+     * `nav`: room for the fixed mobile BottomNav. `actions`: a StickyActionBar
+     * follows, which takes its own space. `none`: page handles it.
      */
     bottomSpace: {
       default: "pb-12",
       nav: "pb-24 sm:pb-12",
-      actions: "pb-44",
+      actions: "pb-6",
       none: "pb-0",
     },
   },

@@ -65,10 +65,31 @@ test('keeps "Confirmar recepción" disabled until "Tengo el artículo conmigo ah
   await page.goto(CHECKLIST)
 
   await expect(confirmButton(page)).toBeDisabled()
-  await expect(page.getByText('Marca “Tengo el artículo conmigo ahora” para continuar.')).toBeVisible()
   await page.getByRole('checkbox', { name: 'Tengo el artículo conmigo ahora' }).check()
 
   await expect(confirmButton(page)).toBeEnabled()
+})
+
+test('keeps "Tengo el artículo conmigo ahora" in the action bar, reachable after writing a report (PUR-5, PUR-6)', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await logIn(page)
+  await mockReservation(page)
+  const bodies = await mockReception(page)
+  await page.goto(CHECKLIST)
+
+  await page.getByLabel('¿Algo que quieras reportar?').fill('La caja llegó abierta.')
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  const actions = page.getByRole('region', { name: 'Acciones' })
+  const hasItemNow = actions.getByRole('checkbox', { name: 'Tengo el artículo conmigo ahora' })
+  await expect(hasItemNow).toBeInViewport()
+  await hasItemNow.check()
+  await expect(actions.getByRole('button', { name: 'Confirmar recepción' })).toBeEnabled()
+  await confirmButton(page).click()
+
+  await expect(page).toHaveURL(`${RECAP}/rate`)
+  expect(bodies).toEqual([
+    expect.objectContaining({ hasItemNow: true, issueReport: 'La caja llegó abierta.' }),
+  ])
 })
 
 test('sends unchecked items as false and goes to the rating step (PUR-6)', async ({ page }) => {
