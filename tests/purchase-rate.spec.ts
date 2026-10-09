@@ -4,7 +4,7 @@ import { internalError } from './fixtures/listings'
 import {
   RESERVATION_ID,
   alreadyRatedError,
-  receptionChecklist,
+  receivedReservationDetail,
   reservationDetail,
   receptionNotConfirmedError,
   reservationNotFoundError,
@@ -17,13 +17,6 @@ const RATE = `${RECAP}/rate`
 const THANKS = `${RECAP}/thanks`
 const RATING_URL = `**/api/v1/reservations/${RESERVATION_ID}/rating`
 
-const received = {
-  ...reservationDetail,
-  buyerReceivedAt: '2026-10-09T12:00:00.000Z',
-  receptionChecklist,
-  actions: { canConfirmHandover: false, canConfirmReception: false, canRate: true },
-}
-
 async function logIn(page: Page) {
   await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
   await page.route('**/api/v1/me', (route) =>
@@ -31,7 +24,7 @@ async function logIn(page: Page) {
   )
 }
 
-async function mockReservation(page: Page, detail: object = received) {
+async function mockReservation(page: Page, detail: object = receivedReservationDetail) {
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}`, (route) =>
     route.fulfill({ status: 200, json: detail }),
   )
@@ -129,9 +122,9 @@ test('goes back to the recap before reception is confirmed (PUR-8)', async ({ pa
 test('goes back to the recap when the seller is already rated (PUR-8)', async ({ page }) => {
   await logIn(page)
   await mockReservation(page, {
-    ...received,
+    ...receivedReservationDetail,
     rating: { stars: 5, createdAt: '2026-10-09T12:05:00.000Z' },
-    actions: { ...received.actions, canRate: false },
+    actions: { ...receivedReservationDetail.actions, canRate: false },
   })
 
   await page.goto(RATE)
@@ -156,7 +149,7 @@ test('explains a 409 ALREADY_RATED and links back to the purchase (PUR-8)', asyn
 test('goes back to the recap on a 409 RECEPTION_NOT_CONFIRMED (PUR-8)', async ({ page }) => {
   await logIn(page)
   await mockReservation(page)
-  // The recap reloads the purchase, which isn't received yet.
+  // The recap reloads the purchase, which isn't receivedReservationDetail yet.
   await page.route(RATING_URL, async (route) => {
     await mockReservation(page, reservationDetail)
     return route.fulfill({ status: 409, json: receptionNotConfirmedError })
@@ -203,7 +196,7 @@ test('shows a loading state while the purchase loads', async ({ page }) => {
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}`, async (route) => {
     await held
-    await route.fulfill({ status: 200, json: received })
+    await route.fulfill({ status: 200, json: receivedReservationDetail })
   })
 
   await page.goto(RATE)
@@ -219,7 +212,7 @@ test('offers a retry when the purchase fails to load', async ({ page }) => {
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}`, (route) =>
     down
       ? route.fulfill({ status: 500, json: internalError })
-      : route.fulfill({ status: 200, json: received }),
+      : route.fulfill({ status: 200, json: receivedReservationDetail }),
   )
   await page.goto(RATE)
 
@@ -244,7 +237,7 @@ test("says it doesn't exist for another user's purchase id (404)", async ({ page
 
 test("doesn't offer the rating to the seller of the reservation", async ({ page }) => {
   await logIn(page)
-  await mockReservation(page, { ...received, viewerRole: 'SELLER' })
+  await mockReservation(page, { ...receivedReservationDetail, viewerRole: 'SELLER' })
 
   await page.goto(RATE)
 

@@ -74,6 +74,14 @@ export const receptionChecklist = {
   createdAt: '2026-10-09T12:00:00.000Z',
 }
 
+/** The buyer's view once reception is confirmed and the seller is still unrated (PUR-8). */
+export const receivedReservationDetail = {
+  ...reservationDetail,
+  buyerReceivedAt: '2026-10-09T12:00:00.000Z',
+  receptionChecklist,
+  actions: { canConfirmHandover: false, canConfirmReception: false, canRate: true },
+}
+
 export type ReservationDetailFixture = typeof reservationDetail
 
 export const reservationNotFoundError = {

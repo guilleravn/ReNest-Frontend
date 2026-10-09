@@ -4,7 +4,7 @@ import { internalError } from './fixtures/listings'
 import {
   RESERVATION_ID,
   receptionAlreadyConfirmedError,
-  receptionChecklist,
+  receivedReservationDetail,
   reservationDetail,
   reservationNotFoundError,
 } from './fixtures/purchases'
@@ -14,13 +14,6 @@ test.use({ viewport: { width: 375, height: 812 } })
 const RECAP = `/purchases/${RESERVATION_ID}`
 const CHECKLIST = `${RECAP}/checklist`
 const RECEPTION_URL = `**/api/v1/reservations/${RESERVATION_ID}/reception`
-
-const received = {
-  ...reservationDetail,
-  buyerReceivedAt: '2026-10-09T12:00:00.000Z',
-  receptionChecklist,
-  actions: { canConfirmHandover: false, canConfirmReception: false, canRate: true },
-}
 
 async function logIn(page: Page) {
   await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
@@ -37,9 +30,9 @@ async function mockReservation(page: Page, detail: object = reservationDetail) {
 
 /**
  * Answers POST …/reception with `status`/`json` and records the bodies sent.
- * Once confirmed, the purchase loads as received, so the rating step opens.
+ * Once confirmed, the purchase loads as receivedReservationDetail, so the rating step opens.
  */
-async function mockReception(page: Page, status = 200, json: object = received) {
+async function mockReception(page: Page, status = 200, json: object = receivedReservationDetail) {
   const bodies: unknown[] = []
   await page.route(RECEPTION_URL, async (route) => {
     bodies.push(route.request().postDataJSON())
@@ -140,7 +133,7 @@ test('works after the seller confirmed the handover (PUR-4)', async ({ page }) =
 
 test('goes back to the recap when reception is already confirmed (PUR-7)', async ({ page }) => {
   await logIn(page)
-  await mockReservation(page, received)
+  await mockReservation(page, receivedReservationDetail)
 
   await page.goto(CHECKLIST)
 
