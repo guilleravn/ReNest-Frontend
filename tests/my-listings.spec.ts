@@ -41,7 +41,11 @@ test('has the Activos, En proceso and Completados tabs, opening on Activos (SAL-
   await page.goto('/listings')
 
   await expect(page.getByRole('heading', { name: 'Mis artículos' })).toBeVisible()
-  await expect(tabs(page).getByRole('link')).toHaveText(['Activos', 'En proceso', 'Completados'])
+  const links = tabs(page).getByRole('link')
+  await expect(links).toHaveCount(3)
+  await expect(links.nth(0)).toHaveAccessibleName('Activos')
+  await expect(links.nth(1)).toHaveAccessibleName('En proceso 1 venta pendiente')
+  await expect(links.nth(2)).toHaveAccessibleName('Completados')
   await expect(tabs(page).getByRole('link', { name: 'Activos' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('link', { name: /Lámpara de pie de latón/ })).toHaveAttribute(
     'href',
