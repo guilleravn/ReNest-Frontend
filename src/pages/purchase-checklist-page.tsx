@@ -214,22 +214,19 @@ export function PurchaseChecklistPage() {
                 onChange={(event) => setReport(event.target.value)}
               />
             </FormField>
-
-            <Checkbox
-              className="rounded-xl border border-border p-4 font-medium text-foreground"
-              checked={hasItemNow}
-              onChange={(event) => setHasItemNow(event.target.checked)}
-            >
-              Tengo el artículo conmigo ahora
-            </Checkbox>
           </form>
         )}
       </PageContainer>
 
       {purchase && (
-        <StickyActionBar
-          note={hasItemNow ? undefined : 'Marca “Tengo el artículo conmigo ahora” para continuar.'}
-        >
+        <StickyActionBar>
+          <Checkbox
+            className="mb-3 py-1 font-medium text-foreground"
+            checked={hasItemNow}
+            onChange={(event) => setHasItemNow(event.target.checked)}
+          >
+            Tengo el artículo conmigo ahora
+          </Checkbox>
           <Button type="submit" form="reception-form" fullWidth disabled={!hasItemNow || saving}>
             {saving ? 'Confirmando…' : 'Confirmar recepción'}
           </Button>
