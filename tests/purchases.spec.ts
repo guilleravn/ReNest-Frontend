@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { internalError } from './fixtures/listings'
-import { purchaseCompleted, purchaseInProgress } from './fixtures/purchases'
+import { purchaseCompleted, purchaseInProgress, reservationDetail } from './fixtures/purchases'
 import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
@@ -57,6 +57,9 @@ test('keeps a purchase under "Agendados" when only the seller confirmed the hand
 test('opens the purchase recap when tapping a purchase (PUR-3)', async ({ page }) => {
   await logIn(page)
   await mockPurchases(page, [purchaseInProgress], [])
+  await page.route(`**/api/v1/reservations/${purchaseInProgress.id}`, (route) =>
+    route.fulfill({ status: 200, json: reservationDetail }),
+  )
   await page.goto('/purchases')
 
   await page.getByRole('link', { name: /Aparador de teca/ }).click()

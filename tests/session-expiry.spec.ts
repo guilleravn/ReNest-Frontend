@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, fakeJwt, unauthorizedError } from './fixtures/auth'
 import { logIn } from './fixtures/session'
 

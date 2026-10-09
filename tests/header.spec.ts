@@ -1,10 +1,12 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse } from './fixtures/auth'
 import { logIn } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 test('offers login to an anonymous visitor', async ({ page }) => {
+  await mockEmptyFeed(page)
   await page.goto('/feed')
 
   await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible()
@@ -12,6 +14,7 @@ test('offers login to an anonymous visitor', async ({ page }) => {
 })
 
 test('shows the account menu to a logged-in user and logs out from it', async ({ page }) => {
+  await mockEmptyFeed(page)
   await logIn(page)
   await page.goto('/feed')
 
@@ -25,6 +28,7 @@ test('shows the account menu to a logged-in user and logs out from it', async ({
 })
 
 test('shows neither the menu nor the login button while the session loads', async ({ page }) => {
+  await mockEmptyFeed(page)
   await logIn(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))

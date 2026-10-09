@@ -1,9 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, invalidCredentialsError, rateLimitedError } from './fixtures/auth'
+import { mockEmptyFeed } from './fixtures/feed'
+import { mockSession } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 test('logs in, stores the token and lands on the feed', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   await page.route('**/api/v1/auth/login', (route) =>
     route.fulfill({ status: 200, json: authResponse }),
   )
@@ -72,6 +76,8 @@ test('explains that there were too many attempts', async ({ page }) => {
 })
 
 test('shows the loading state while logging in', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route('**/api/v1/auth/login', async (route) => {

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { RESERVATION_ID, receivedReservationDetail } from './fixtures/purchases'
 import { logIn } from './fixtures/session'
 

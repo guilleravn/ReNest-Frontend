@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { unauthorizedError } from './fixtures/auth'
 import { internalError } from './fixtures/listings'
 import {

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import {
   internalError,
   listingDetailForBuyer,
@@ -13,6 +13,7 @@ import {
   unauthorizedError,
 } from './fixtures/reservations'
 import { logIn } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -108,10 +109,7 @@ test('"Ver más productos" returns to the feed (RES-8)', async ({ page }) => {
   await page.route('**/api/v1/reservations', (route) =>
     route.fulfill({ status: 201, json: reservationDetail }),
   )
-  await page.route('**/api/v1/listings?*', (route) =>
-    route.fulfill({ status: 200, json: { data: [], nextCursor: null } }),
-  )
-  await page.route('**/api/v1/categories', (route) => route.fulfill({ status: 200, json: [] }))
+  await mockEmptyFeed(page)
   await page.goto(PICKUP)
   await chooseAndConfirm(page, 'Plaza Principal')
 

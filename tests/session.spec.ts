@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, fakeJwt, unauthorizedError } from './fixtures/auth'
 import { logIn } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -21,6 +22,7 @@ test('stays anonymous without asking the API when there is no token', async ({ p
 })
 
 test('loads the session with the stored token', async ({ page }) => {
+  await mockEmptyFeed(page)
   await logIn(page)
   const authorization = page.waitForRequest((request) => request.url().endsWith('/api/v1/me'))
   await page.route('**/api/v1/me', (route) =>
@@ -34,6 +36,7 @@ test('loads the session with the stored token', async ({ page }) => {
 })
 
 test('discards a token the API rejects with 401', async ({ page }) => {
+  await mockEmptyFeed(page)
   await logIn(page, { token: fakeJwt(3600, 'rejected-by-the-server') })
   const answered = page.waitForResponse((response) => response.url().endsWith('/api/v1/me'))
   await page.route('**/api/v1/me', (route) =>
@@ -51,6 +54,7 @@ test('discards a token the API rejects with 401', async ({ page }) => {
 })
 
 test('keeps the token when loading the session fails for another reason', async ({ page }) => {
+  await mockEmptyFeed(page)
   await logIn(page)
   const answered = page.waitForResponse((response) => response.url().endsWith('/api/v1/me'))
   await page.route('**/api/v1/me', (route) =>

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { categories, feedPage, lampCard } from './fixtures/feed'
 import { internalError, ownListingDetail } from './fixtures/listings'
 import { activeItem, completedItem, pendingItem } from './fixtures/my-listings'

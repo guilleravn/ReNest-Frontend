@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { authResponse } from './fixtures/auth'
 import { categories, feedPage, lampCard } from './fixtures/feed'
 import { logIn } from './fixtures/session'

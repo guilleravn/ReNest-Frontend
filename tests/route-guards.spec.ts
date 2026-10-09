@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, fakeJwt, unauthorizedError } from './fixtures/auth'
-import { logIn } from './fixtures/session'
+import { logIn, mockSession } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -9,6 +10,8 @@ const TOKEN_KEY = 'renest.accessToken'
 test('sends an anonymous user to login and back after logging in', async ({
   page,
 }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   await page.route('**/api/v1/auth/login', (route) =>
     route.fulfill({ status: 200, json: authResponse }),
   )
@@ -26,6 +29,7 @@ test('sends an anonymous user to login and back after logging in', async ({
 test('keeps the return path when switching from login to register', async ({
   page,
 }) => {
+  await mockSession(page)
   await page.goto('/purchases')
   await page.getByRole('link', { name: 'Regístrate' }).click()
   await expect(page).toHaveURL(/\/register$/)
@@ -64,6 +68,7 @@ test('sends a user with an expired token to login', async ({ page }) => {
 test('redirects a logged-in user away from login and register', async ({
   page,
 }) => {
+  await mockEmptyFeed(page)
   await logIn(page)
 
   await page.goto('/login')
@@ -89,6 +94,8 @@ test('treats an expired token as logged out before any request (AUTH-6)', async 
 })
 
 test('ignores a return address outside the app', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   await page.route('**/api/v1/auth/login', (route) =>
     route.fulfill({ status: 200, json: authResponse }),
   )

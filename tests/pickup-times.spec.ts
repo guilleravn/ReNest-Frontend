@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test, type Page, type Route } from './fixtures/test'
 import { listingNotEditableError } from './fixtures/edit-listing'
 import {
   internalError,
