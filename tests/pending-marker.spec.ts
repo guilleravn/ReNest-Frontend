@@ -47,6 +47,7 @@ for (const path of ['/feed', '/listings', '/purchases', '/account']) {
     await logIn(page)
     await mockFeed(page)
     await mockMyListings(page, [pendingItem])
+    await page.route('**/api/v1/me/purchases?*', (route) => route.fulfill({ status: 200, json: [] }))
 
     await page.goto(path)
 
