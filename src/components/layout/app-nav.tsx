@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { House, Tags, UserRound } from "lucide-react"
+import { House, Tags } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { pendingSalesLabel } from "@/lib/pending-sales"
 import { CountBadge } from "@/components/ui/count-badge"
@@ -17,9 +17,9 @@ type NavItem = {
 }
 
 type AppNavProps = {
-  /** Path of the active item. */
-  activeTo: string
-  /** Defaults to Inicio + Mis artículos + Cuenta. */
+  /** Path of the active item. Omit it when no tab matches the page. */
+  activeTo?: string
+  /** Defaults to Inicio + Mis artículos. */
   items?: NavItem[]
 }
 
@@ -34,7 +34,6 @@ function defaultNavItems(pendingSales?: number): NavItem[] {
       count: pendingSales,
       countLabel: pendingSales ? pendingSalesLabel(pendingSales) : undefined,
     },
-    { label: "Cuenta", to: "/account", icon: <UserRound aria-hidden /> },
   ]
 }
 

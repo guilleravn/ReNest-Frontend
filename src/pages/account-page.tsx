@@ -27,7 +27,7 @@ export function AccountPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SessionHeader bordered={false} />
-      <DesktopNav activeTo="/account" items={navItems} />
+      <DesktopNav items={navItems} />
       <PageContainer width="narrow" bottomSpace="nav" className="space-y-6">
         <PageHeader title="Cuenta" />
 
@@ -60,7 +60,7 @@ export function AccountPage() {
           Cerrar sesión
         </Button>
       </PageContainer>
-      <BottomNav activeTo="/account" items={navItems} />
+      <BottomNav items={navItems} />
     </div>
   )
 }
