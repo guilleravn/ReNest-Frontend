@@ -62,6 +62,35 @@ test('points to My Listings when the listing is no longer Active', async ({ page
   await expect(page.getByText('Activo', { exact: true })).toHaveCount(0)
 })
 
+test('opens the edit form from my Active listing (C3)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page, ownListingDetail)
+  await page.route('**/api/v1/categories', (route) => route.fulfill({ status: 200, json: [] }))
+
+  await page.goto(DETAIL)
+  await page.getByRole('link', { name: 'Editar artículo' }).click()
+
+  await expect(page).toHaveURL(`${DETAIL}/edit`)
+  await expect(page.getByRole('heading', { name: 'Editar artículo' })).toBeVisible()
+})
+
+for (const status of ['PENDING', 'COMPLETED'] as const) {
+  test(`hides the edit action when the listing is ${status} (LST-11)`, async ({ page }) => {
+    await logIn(page)
+    await mockListing(page, {
+      ...ownListingDetail,
+      status,
+      pickupOptions: [],
+      viewer: { isSeller: true, canReserve: false, canEdit: false },
+    })
+
+    await page.goto(DETAIL)
+
+    await expect(page.getByText('Este artículo ya no está activo')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Editar artículo' })).toHaveCount(0)
+  })
+}
+
 test('sends another seller’s listing to the buyer view', async ({ page }) => {
   await logIn(page)
   await mockListing(page, listingDetailForBuyer)

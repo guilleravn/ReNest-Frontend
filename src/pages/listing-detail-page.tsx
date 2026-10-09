@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { CircleAlert, PackageX } from 'lucide-react'
+import { CircleAlert, PackageX, Pencil } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ImageGallery } from '@/components/listing/image-gallery'
@@ -108,6 +108,14 @@ export function ListingDetailPage() {
                   description={listing.description}
                 />
               </div>
+
+              {/* Only while Active: once reserved the listing is frozen (LST-11). */}
+              {listing.viewer.canEdit && (
+                <ButtonLink to={`/listings/${listing.id}/edit`} variant="outline" fullWidth>
+                  <Pencil className="size-4" aria-hidden />
+                  Editar artículo
+                </ButtonLink>
+              )}
 
               {listing.status === 'ACTIVE' ? (
                 <section aria-labelledby="pickup-options" className="space-y-3">

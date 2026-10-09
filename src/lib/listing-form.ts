@@ -1,4 +1,11 @@
-import type { ListingCondition, NewListing, UploadedPhoto, Weekday } from '@/lib/listings'
+import type {
+  ListingCondition,
+  ListingDetail,
+  ListingUpdate,
+  NewListing,
+  UploadedPhoto,
+  Weekday,
+} from '@/lib/listings'
 
 // UX mirror of the publish rules (LST-1..5, GEN-2). The API enforces them.
 export const MAX_PHOTOS = 3
@@ -11,10 +18,13 @@ export const DESCRIPTION_MAX = 2000
 export const PRICE_MIN = 1
 export const PRICE_MAX = 20_000_000
 
+/** A photo in the form: one the listing already has (editing), or a new upload. */
+export type FormPhoto = { photoId: string; url: string } | UploadedPhoto
+
 /** Step 1 of a new listing; also the shape an edit form starts from. */
 export interface ListingDetailsValues {
   /** In order; the first is the cover. */
-  photos: UploadedPhoto[]
+  photos: FormPhoto[]
   title: string
   categoryId: string
   condition: ListingCondition | ''
@@ -141,8 +151,39 @@ export function toNewListing(
     description: details.description.trim(),
     condition: details.condition as ListingCondition,
     priceCents: priceToCents(details.price) ?? 0,
-    photoKeys: details.photos.map((photo) => photo.storageKey),
+    // A new listing only has new uploads.
+    photoKeys: details.photos.flatMap((photo) => ('storageKey' in photo ? [photo.storageKey] : [])),
     pickupOptions,
+  }
+}
+
+/** The edit form's starting values: the listing as it is now. */
+export function toListingDetailsValues(listing: ListingDetail): ListingDetailsValues {
+  return {
+    photos: [...listing.photos]
+      .sort((a, b) => a.position - b.position)
+      .map(({ id, url }) => ({ photoId: id, url })),
+    title: listing.title,
+    categoryId: listing.category.id,
+    condition: listing.condition,
+    // Known limit (decision D-13): a price with cents, only possible through
+    // the API, prefills as "150.5" and must be made whole before saving.
+    price: String(listing.priceCents / 100),
+    description: listing.description,
+  }
+}
+
+/** The PATCH /listings/:id body; the photos replace the whole set (LST-12). */
+export function toListingUpdate(details: ListingDetailsValues): ListingUpdate {
+  return {
+    categoryId: details.categoryId,
+    title: details.title.trim(),
+    description: details.description.trim(),
+    condition: details.condition as ListingCondition,
+    priceCents: priceToCents(details.price) ?? 0,
+    photos: details.photos.map((photo) =>
+      'photoId' in photo ? { photoId: photo.photoId } : { storageKey: photo.storageKey },
+    ),
   }
 }
 
@@ -153,6 +194,7 @@ const API_DETAILS_FIELDS: Record<string, ListingDetailsField> = {
   condition: 'condition',
   priceCents: 'price',
   photoKeys: 'photos',
+  photos: 'photos',
 }
 
 /** The step 1 field an API `details[].field` points to ("photoKeys[1]" → photos), if any. */

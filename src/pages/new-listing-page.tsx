@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
-import { ListingDetailsForm, type CategoriesState } from '@/components/listing/listing-details-form'
+import { ListingDetailsForm } from '@/components/listing/listing-details-form'
 import { PickupOptionSheet } from '@/components/listing/pickup-option-sheet'
 import { PickupSlotItem, PickupSlotList } from '@/components/listing/pickup-slot-item'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,8 @@ import {
   toNewListing,
   type PickupOptionDraft,
 } from '@/lib/listing-form'
-import { createListing, getCategories, type Category } from '@/lib/listings'
+import { createListing } from '@/lib/listings'
+import { useCategories } from '@/lib/use-categories'
 import { useListingDetailsForm } from '@/lib/use-listing-details-form'
 
 type Step = 1 | 2
@@ -206,26 +207,4 @@ export function NewListingPage() {
       )}
     </div>
   )
-}
-
-function useCategories(): CategoriesState {
-  const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<
-    { attempt: number; items: Category[] } | { attempt: number; error: true } | null
-  >(null)
-
-  useEffect(() => {
-    let current = true
-    getCategories().then(
-      (items) => current && setResult({ attempt, items }),
-      () => current && setResult({ attempt, error: true }),
-    )
-    return () => {
-      current = false
-    }
-  }, [attempt])
-
-  if (!result || result.attempt !== attempt) return { status: 'loading' }
-  if ('error' in result) return { status: 'error', onRetry: () => setAttempt((n) => n + 1) }
-  return { status: 'ready', items: result.items }
 }

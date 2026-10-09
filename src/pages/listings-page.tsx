@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Bell, CircleAlert, PackageCheck, PackageOpen, Plus, Tags } from 'lucide-react'
 import { BottomNav, DesktopNav, defaultNavItems } from '@/components/layout/app-nav'
 import { PageContainer } from '@/components/layout/page-container'
@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { FloatingActionButton } from '@/components/ui/floating-action-button'
 import { PageHeader } from '@/components/ui/page-header'
 import { SegmentedControl, SegmentedItem } from '@/components/ui/segmented-control'
+import { Toast, ToastViewport } from '@/components/ui/toast'
 import { conditionLabel, formatPrice } from '@/lib/format'
 import { getMyListings, type ListingStatus, type MyListing } from '@/lib/listings'
 import { pendingSalesLabel, usePendingSalesCount } from '@/lib/pending-sales'
@@ -65,6 +66,7 @@ export function ListingsPage() {
   // count hook shared by every page with the nav.
   const [seenPendingSales, setSeenPendingSales] = useState<number>()
   const pendingSales = seenPendingSales ?? fetchedPendingSales
+  const notice = useArrivalNotice()
 
   useEffect(() => {
     let current = true
@@ -157,8 +159,41 @@ export function ListingsPage() {
         Nuevo artículo
       </FloatingActionButton>
       <BottomNav activeTo="/listings" items={navItems} />
+
+      {notice.text && (
+        <ToastViewport>
+          <Toast onDismiss={notice.dismiss}>{notice.text}</Toast>
+        </ToastViewport>
+      )}
     </div>
   )
+}
+
+/**
+ * A success message another page sent here in the router state, such as
+ * "Cambios guardados" after an edit. It is shown once: the state is cleared
+ * so a reload doesn't show it again, and the toast leaves on its own.
+ */
+function useArrivalNotice() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [text, setText] = useState<string | null>(
+    () => (location.state as { notice?: string } | null)?.notice ?? null,
+  )
+
+  useEffect(() => {
+    if (location.state) {
+      navigate({ search: location.search }, { replace: true, state: null })
+    }
+  }, [location.state, location.search, navigate])
+
+  useEffect(() => {
+    if (!text) return
+    const timer = setTimeout(() => setText(null), 4000)
+    return () => clearTimeout(timer)
+  }, [text])
+
+  return { text, dismiss: () => setText(null) }
 }
 
 function MyListingRow({ item: { listing, reservation } }: { item: MyListing }) {
