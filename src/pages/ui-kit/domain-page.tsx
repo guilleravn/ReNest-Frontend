@@ -271,7 +271,7 @@ export function UiKitDomainPage() {
 
       <Section
         name="AppHeader"
-        varies="bordered, backTo (back arrow, mobile only), purchasesCount, user (avatarSrc, verified, email, location; omit when logged out), loginTo, menuItems, onLogout."
+        varies="bordered, backTo or onBack (back arrow, mobile only), purchasesCount, user (avatarSrc, verified, email, location; omit when logged out), loginTo, menuItems, onLogout."
         fixed="Logo on the left, 'Mis compras' and avatar menu on the right, 64px tall. (Sticky to the top in the app.)"
       >
         <Demos cols={1}>

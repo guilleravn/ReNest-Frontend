@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
@@ -19,18 +19,17 @@ import {
   detailsFieldOf,
   MAX_PICKUP_OPTIONS,
   toNewListing,
+  validateListingDetails,
   type PickupOptionDraft,
 } from '@/lib/listing-form'
 import { createListing } from '@/lib/listings'
 import { useCategories } from '@/lib/use-categories'
 import { useListingDetailsForm } from '@/lib/use-listing-details-form'
 
-type Step = 1 | 2
 type Notice = { tone: 'success' | 'error'; text: string }
 
 /** New listing: details, then pickup availability. Nothing is saved until publishing (LST-9, LST-10). */
 export function NewListingPage() {
-  const [step, setStep] = useState<Step>(1)
   const details = useListingDetailsForm()
   const categories = useCategories()
   const [pickupOptions, setPickupOptions] = useState<PickupOptionDraft[]>([])
@@ -39,6 +38,23 @@ export function NewListingPage() {
   const [confirming, setConfirming] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // The step lives in the URL so browser back moves between steps. Step 2 needs
+  // valid details: opened directly or after a reload, it falls back to step 1.
+  const detailsReady =
+    details.uploading === 0 && Object.keys(validateListingDetails(details.values)).length === 0
+  const step = searchParams.get('step') === '2' && detailsReady ? 2 : 1
+  const cameFromDetails = (location.state as { fromDetails?: boolean } | null)?.fromDetails === true
+
+  useEffect(() => {
+    if (searchParams.has('step') && step === 1) setSearchParams({}, { replace: true })
+  }, [searchParams, step, setSearchParams])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [step])
 
   // Toasts sit over the action bar, so they leave on their own.
   useEffect(() => {
@@ -49,15 +65,19 @@ export function NewListingPage() {
 
   function continueToPickup() {
     if (!details.validate()) return
-    setStep(2)
-    window.scrollTo({ top: 0 })
+    setSearchParams({ step: '2' }, { state: { fromDetails: true } })
+  }
+
+  /** Pops the step 2 entry when "Continuar" pushed it, so history keeps no extra step 1. */
+  function goToDetails() {
+    if (cameFromDetails) navigate(-1)
+    else setSearchParams({}, { replace: true })
   }
 
   function backToDetails(message: string) {
     setConfirming(false)
-    setStep(1)
+    goToDetails()
     setNotice({ tone: 'error', text: message })
-    window.scrollTo({ top: 0 })
   }
 
   async function publish() {
@@ -94,7 +114,7 @@ export function NewListingPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <SessionHeader backTo="/listings" />
+      <SessionHeader backTo="/listings" onBack={step === 2 ? goToDetails : undefined} />
       <PageContainer width="narrow" bottomSpace="actions" className="space-y-6">
         <StepProgress label="Nuevo artículo" currentStep={step} totalSteps={2} />
 
@@ -142,7 +162,7 @@ export function NewListingPage() {
                 Ya agregaste el máximo de {MAX_PICKUP_OPTIONS} opciones.
               </p>
             )}
-            <Button variant="ghost" size="md" onClick={() => setStep(1)}>
+            <Button variant="ghost" size="md" onClick={goToDetails}>
               Volver a los datos del artículo
             </Button>
           </>

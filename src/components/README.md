@@ -45,8 +45,8 @@ Text content (price, category, condition, location, status) is passed in as alre
 
 | Component | Used for | Key props |
 | --- | --- | --- |
-| `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `bordered`, `menuItems`, `onLogout` |
-| `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `bordered`, `menuItems`, `loginState` |
+| `AppHeader` | Top bar: logo, "Mis compras", account menu. Without `user` it shows "Iniciar sesión" | `user` (omit for anonymous), `loading`, `loginTo`, `loginState`, `purchasesCount`, `backTo` (mobile back arrow), `onBack` (back arrow that runs a callback, e.g. a wizard step; wins over `backTo`), `bordered`, `menuItems`, `onLogout` |
+| `SessionHeader` | `AppHeader` wired to `useAuth()`: logged-in menu with "Mi cuenta" and logout, or the login button. Use this in pages | `backTo`, `onBack`, `bordered`, `menuItems`, `loginState` |
 | `DesktopNav`, `BottomNav` | Inicio / Mis artículos tabs (desktop) and bottom tab bar (mobile) | `activeTo` (optional; omit for no active tab), `items` (`defaultNavItems(pendingSales)`: Pending sales counter on "Mis artículos", from `usePendingSalesCount()`) |
 | `RequireAuth`, `PublicOnly` | Route wrappers in `App.tsx`: the first sends anonymous users to login and back (and shows the loading and retry states of the session); the second redirects logged-in users away from login/register | none (layout routes) |
 | `AuthLayout` | Login/register screen: logo + card + footer line | `children`, `footer` |
@@ -75,4 +75,5 @@ Detail and flow pages use `<AppHeader backTo="…" />` (bordered) and have no na
 - Import `cn` from `@/lib/utils` (not from `"cn"` directly). It knows that `text-button`, `text-label`, `text-badge` and `text-count` are font sizes. If you add another `--text-*` token, register it there.
 - `h2`, `h3` and `h4` use the serif font (`--font-heading`) by default. Add `font-sans` when a heading should be sans (like the product title in `ProductSummary`).
 - Icons: `lucide-react`.
+- Icon-only buttons have a hit area of at least 44×44px (`size-11`) and a `focus-visible` outline. When the icon must look smaller, keep the visible shape inside the button or use negative margins so the layout doesn't move (`PhotoUploader`, `PickupSlotItem`, `Toast`, `SearchInput`).
 - User-facing copy is in Spanish; code, comments and docs are in English.

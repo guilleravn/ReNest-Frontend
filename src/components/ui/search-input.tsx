@@ -27,7 +27,7 @@ function SearchInput({
       <input
         type="search"
         value={value}
-        className="h-12 w-full rounded-xl border-(length:--border-width-field) border-border-strong bg-background pl-10 pr-10 text-base outline-none placeholder:text-text-subtle focus-visible:border-green-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-12 w-full rounded-xl border-(length:--border-width-field) border-border-strong bg-background pl-10 pr-12 text-base outline-none placeholder:text-text-subtle focus-visible:border-green-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-search-cancel-button]:appearance-none"
         {...props}
       />
       {onClear && hasValue && (
@@ -35,7 +35,7 @@ function SearchInput({
           type="button"
           aria-label={clearLabel}
           onClick={onClear}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-text-muted hover:text-foreground"
+          className="absolute right-0.5 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
         >
           <X className="size-4" aria-hidden />
         </button>

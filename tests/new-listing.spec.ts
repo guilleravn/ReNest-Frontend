@@ -15,6 +15,7 @@ import {
 } from './fixtures/new-listing'
 import { logIn } from './fixtures/session'
 import { expectNotCoveredByActionBar } from './fixtures/action-bar'
+import { expectTapTarget } from './fixtures/tap-target'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -286,6 +287,60 @@ test('keeps the details when going back to step 1 (LST-9)', async ({ page }) => 
 
   await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
   await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
+})
+
+test('browser back on step 2 returns to step 1 with the data intact, and forward keeps the pickup pairs (LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+  await expect(page).toHaveURL('/listings/new?step=2')
+  await addPickupOption(page, { place: 'Plaza Principal' })
+
+  await page.goBack()
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
+  await expect(page.getByRole('img', { name: /Foto \d del artículo/ })).toHaveCount(2)
+
+  await page.goForward()
+
+  await expect(page.getByText('Paso 2 de 2')).toBeVisible()
+  await expect(pickupList(page).getByRole('listitem')).toHaveCount(1)
+})
+
+test('the header arrow on step 2 returns to step 1 with the data intact (LST-9)', async ({ page }) => {
+  await goToPickupStep(page)
+
+  await page.getByRole('button', { name: 'Volver', exact: true }).click()
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
+  await expect(page.getByLabel('Título')).toHaveValue('Silla de comedor en roble')
+
+  // Going back a step pops the history entry instead of adding one.
+  await page.goBack()
+  await expect(page).not.toHaveURL(/step=2/)
+})
+
+test('the remove-photo, remove-pickup and close-toast buttons are at least 44px', async ({ page }) => {
+  await goToPickupStep(page)
+  await addPickupOption(page, { place: 'Plaza Principal' })
+
+  // First, while the toast that the add shows is still up (it leaves after 4s).
+  await expectTapTarget(page.getByRole('button', { name: 'Cerrar' }))
+  await expectTapTarget(page.getByRole('button', { name: 'Quitar Plaza Principal' }))
+
+  await page.getByRole('button', { name: 'Volver a los datos del artículo' }).click()
+  await expectTapTarget(page.getByRole('button', { name: 'Quitar foto 1' }))
+})
+
+test('opening step 2 without the details lands on step 1 (LST-9)', async ({ page }) => {
+  await logIn(page)
+  await mockCategories(page)
+
+  await page.goto('/listings/new?step=2')
+
+  await expect(page).toHaveURL('/listings/new')
+  await expect(page.getByText('Paso 1 de 2')).toBeVisible()
 })
 
 /** Answers POST /listings with `response` and keeps the bodies it got. */

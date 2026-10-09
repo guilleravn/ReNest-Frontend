@@ -34,7 +34,7 @@ function Toast({ tone = "success", children, onDismiss, className }: ToastProps)
           type="button"
           aria-label="Cerrar"
           onClick={onDismiss}
-          className="-m-1 rounded-md p-1 text-text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          className="-m-3.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
         >
           <X className="size-4" aria-hidden />
         </button>

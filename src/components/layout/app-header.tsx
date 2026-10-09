@@ -45,6 +45,8 @@ type AppHeaderProps = {
   loading?: boolean
   /** When set, a back arrow shows on mobile pointing here. */
   backTo?: string
+  /** Back arrow that runs this instead of linking (e.g. a wizard going back a step). Wins over `backTo`. */
+  onBack?: () => void
   /** Bottom border. Turn off on pages where the desktop nav sits right below. */
   bordered?: boolean
   /** Extra account menu entries shown above "Cerrar sesión". */
@@ -62,10 +64,16 @@ function AppHeader({
   loginState,
   loading = false,
   backTo,
+  onBack,
   bordered = true,
   menuItems = [],
   onLogout,
 }: AppHeaderProps) {
+  const backClassName = cn(
+    "-ml-2 inline-flex size-9 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-muted hover:text-foreground sm:hidden",
+    focusRing
+  )
+
   return (
     <header
       className={cn(
@@ -74,17 +82,16 @@ function AppHeader({
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-        {backTo && (
-          <Link
-            to={backTo}
-            aria-label="Volver"
-            className={cn(
-              "-ml-2 inline-flex size-9 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-muted hover:text-foreground sm:hidden",
-              focusRing
-            )}
-          >
+        {onBack ? (
+          <button type="button" aria-label="Volver" onClick={onBack} className={backClassName}>
             <ChevronLeft className="size-5" aria-hidden />
-          </Link>
+          </button>
+        ) : (
+          backTo && (
+            <Link to={backTo} aria-label="Volver" className={backClassName}>
+              <ChevronLeft className="size-5" aria-hidden />
+            </Link>
+          )
         )}
         <Link
           to={homeTo}
