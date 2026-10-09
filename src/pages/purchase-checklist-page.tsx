@@ -58,14 +58,7 @@ export function PurchaseChecklistPage() {
   useEffect(() => {
     let current = true
     getReservation(id).then(
-      (purchase) =>
-        current &&
-        // Only the buyer confirms reception; the seller sees a sale, not a purchase.
-        setState(
-          purchase.viewerRole === 'BUYER'
-            ? { status: 'ready', purchase }
-            : { status: 'not-found' },
-        ),
+      (purchase) => current && setState({ status: 'ready', purchase }),
       (error: unknown) =>
         current &&
         setState({
@@ -103,6 +96,11 @@ export function PurchaseChecklistPage() {
   }
 
   const purchase = state.status === 'ready' ? state.purchase : null
+
+  // Only the buyer confirms reception; the seller has their own view of the same reservation.
+  if (purchase?.viewerRole === 'SELLER') {
+    return <Navigate to={`/sales/${purchase.id}`} replace />
+  }
 
   // Reception can't be changed once confirmed (PUR-7): back to the recap.
   if (purchase && !purchase.actions.canConfirmReception) {

@@ -119,13 +119,18 @@ test("says it doesn't exist for another user's purchase id (404)", async ({ page
   await expect(page.getByRole('link', { name: 'Ver mis compras' })).toHaveAttribute('href', '/purchases')
 })
 
-test('treats a sale of mine as not found, since the recap is the buyer view', async ({ page }) => {
+test('sends the seller of the reservation to their sale detail, replacing the recap', async ({ page }) => {
   await logIn(page)
+  await page.route('**/api/v1/me/purchases?*', (route) => route.fulfill({ status: 200, json: [] }))
   await mockReservation(page, { ...reservationDetail, viewerRole: 'SELLER' })
+  await page.goto('/purchases')
 
   await page.goto(RECAP)
+  await expect(page).toHaveURL(`/sales/${RESERVATION_ID}`)
 
-  await expect(page.getByText('Esta compra no existe')).toBeVisible()
+  // Back skips the recap instead of bouncing to the sale again.
+  await page.goBack()
+  await expect(page).toHaveURL('/purchases')
 })
 
 test('shows a loading state, then an error with retry', async ({ page }) => {

@@ -37,14 +37,7 @@ export function PurchaseRatePage() {
   useEffect(() => {
     let current = true
     getReservation(id).then(
-      (purchase) =>
-        current &&
-        // Only the buyer rates; the seller sees a sale, not a purchase.
-        setState(
-          purchase.viewerRole === 'BUYER'
-            ? { status: 'ready', purchase }
-            : { status: 'not-found' },
-        ),
+      (purchase) => current && setState({ status: 'ready', purchase }),
       (error: unknown) =>
         current &&
         setState({
@@ -88,6 +81,11 @@ export function PurchaseRatePage() {
   }
 
   const purchase = state.status === 'ready' ? state.purchase : null
+
+  // Only the buyer rates; the seller has their own view of the same reservation.
+  if (purchase?.viewerRole === 'SELLER') {
+    return <Navigate to={`/sales/${purchase.id}`} replace />
+  }
 
   // Not received yet, or already rated (PUR-8): back to the recap.
   if (purchase && !purchase.actions.canRate) {
