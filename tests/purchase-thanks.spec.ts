@@ -1,19 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 import { authResponse } from './fixtures/auth'
-import { RESERVATION_ID, receptionChecklist, reservationDetail } from './fixtures/purchases'
+import { RESERVATION_ID, receivedReservationDetail } from './fixtures/purchases'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const RECAP = `/purchases/${RESERVATION_ID}`
 const RATE = `${RECAP}/rate`
 const THANKS = `${RECAP}/thanks`
-
-const received = {
-  ...reservationDetail,
-  buyerReceivedAt: '2026-10-09T12:00:00.000Z',
-  receptionChecklist,
-  actions: { canConfirmHandover: false, canConfirmReception: false, canRate: true },
-}
 
 async function logIn(page: Page) {
   await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
@@ -24,7 +17,7 @@ async function logIn(page: Page) {
 
 async function mockRateStep(page: Page) {
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}`, (route) =>
-    route.fulfill({ status: 200, json: received }),
+    route.fulfill({ status: 200, json: receivedReservationDetail }),
   )
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}/rating`, (route) =>
     route.fulfill({ status: 201, json: { stars: 5, createdAt: '2026-10-09T12:05:00.000Z' } }),
