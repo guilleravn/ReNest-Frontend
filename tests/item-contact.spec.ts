@@ -50,6 +50,23 @@ test('sends the message as edited by the buyer (BRW-7)', async ({ page }) => {
   )
 })
 
+test('logs out from the header menu and stays on login (AUTH-6)', async ({ page }) => {
+  await logIn(page)
+  await mockListing(page, listingDetailForBuyer)
+  await page.goto(CONTACT)
+
+  await page.getByRole('button', { name: 'Mi cuenta' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Mi cuenta' })).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click()
+
+  await expect(page).toHaveURL('/login')
+  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('renest.accessToken'))).toBeNull()
+  await page.reload()
+  await expect(page).toHaveURL('/login')
+  await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+})
+
 test('sends a logged-out visitor to login first (BRW-7, GEN-7)', async ({ page }) => {
   await page.goto(CONTACT)
 
