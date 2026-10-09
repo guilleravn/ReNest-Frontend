@@ -170,3 +170,35 @@ test('a seller publishes, hands the item over and sees their new rating', async 
   await expect(page.getByText('Ya no está disponible')).toBeVisible()
   await expect(page.getByText('4,0 · 1 reseña')).toBeVisible()
 })
+
+test('a buyer finds a listing, reserves it, confirms reception and rates the seller', async ({
+  page,
+  other: seller,
+}) => {
+  const title = `Bicicleta urbana ${runId} comprador`
+  await register(seller, sellerFor('buyer-flow'))
+  const listingUrl = await publishListing(seller, title)
+
+  await register(page, buyerFor('buyer-flow'))
+  await findListing(page, title)
+  await expect(page.getByRole('region', { name: 'Vendedor' })).toContainText('Vera Vendedora')
+  await expect(page.getByText('Sin calificaciones aún')).toBeVisible()
+  await reserve(page)
+
+  await page.getByRole('link', { name: 'Mis compras', exact: true }).click()
+  await expect(page.getByRole('link', { name: new RegExp(title) })).toContainText(
+    'Recogida agendada',
+  )
+
+  await confirmHandover(seller, title)
+
+  await openPurchase(page, title)
+  await expect(page.getByText('El vendedor confirmó la entrega')).toBeVisible()
+  await confirmReception(page)
+  await rateSeller(page, 5)
+  await expect(page.getByText('Gracias por calificar a Vera Vendedora')).toBeVisible()
+
+  await page.goto(listingUrl)
+  await expect(page.getByText('Este artículo ya se vendió.')).toBeVisible()
+  await expect(page.getByText('5,0 · 1 reseña')).toBeVisible()
+})
