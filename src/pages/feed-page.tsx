@@ -8,9 +8,12 @@ import { ProductCard, ProductGrid } from '@/components/listing/product-card'
 import { Button } from '@/components/ui/button'
 import { Chip, ChipGroup } from '@/components/ui/chip'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Select } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { SearchInput } from '@/components/ui/search-input'
-import { cityLabel } from '@/lib/cities'
+import { useAuth } from '@/lib/auth-context'
+import type { City } from '@/lib/auth'
+import { CITY_OPTIONS, cityLabel, isCity } from '@/lib/cities'
 import { usePendingSalesCount } from '@/lib/pending-sales'
 import { conditionLabel, conditionTone, formatPrice } from '@/lib/format'
 import {
@@ -24,8 +27,10 @@ import {
 const MIN_SEARCH_LENGTH = 2
 const MAX_SEARCH_LENGTH = 60
 const SEARCH_DEBOUNCE_MS = 300
+/** `?city=all` keeps every city even for a logged-in user (BRW-11). */
+const ALL_CITIES = 'all'
 
-/** The outcome of one request; `key` says which search, category and attempt it answers. */
+/** The outcome of one request; `key` says which search, filters and attempt it answers. */
 type Result =
   | { key: string; status: 'error' }
   | { key: string; status: 'ready'; listings: ListingCard[]; nextCursor: string | null }
@@ -39,15 +44,29 @@ function searchTerm(text: string): string {
 }
 
 /**
- * Public feed: Active listings, newest first, 20 at a time, with title search
- * and a category filter that combine (BRW-1..3, BRW-10, GEN-5). The search
- * and category live in the URL, so going back from a listing keeps them.
+ * The city to filter by: '' for every city, null while it depends on a user
+ * that is loading or failed to load. A city the URL doesn't name (or names
+ * wrongly) is the user's own; anonymous visitors see every city (BRW-11).
+ */
+function cityFilter(param: string | null, auth: ReturnType<typeof useAuth>): City | '' | null {
+  if (param === ALL_CITIES) return ''
+  if (isCity(param)) return param
+  if (auth.status === 'loading' || auth.status === 'error') return null
+  return auth.user?.city ?? ''
+}
+
+/**
+ * Public feed: Active listings, newest first, 20 at a time, with title search,
+ * a category filter and a city filter that combine (BRW-1..3, BRW-10, BRW-11,
+ * GEN-5). The filters live in the URL, so going back from a listing keeps them.
  */
 export function FeedPage() {
   const navItems = defaultNavItems(usePendingSalesCount())
+  const auth = useAuth()
   const [params, setParams] = useSearchParams()
   const q = searchTerm(params.get('q') ?? '')
   const category = params.get('category') ?? ''
+  const city = cityFilter(params.get('city'), auth)
   const hasFilters = Boolean(q || category)
 
   const [text, setText] = useState(q)
@@ -63,14 +82,20 @@ export function FeedPage() {
   const [result, setResult] = useState<Result | null>(null)
   const [more, setMore] = useState<More | null>(null)
 
-  // Anything not answering the current request is shown as loading.
-  const requestKey = `${q}\n${category}\n${attempt}`
-  const state = result?.key === requestKey ? result : { status: 'loading' as const }
+  // Anything not answering the current request is shown as loading. A user
+  // that failed to load has no city yet: that is an error, not every city.
+  const requestKey = `${q}\n${category}\n${city}\n${attempt}`
+  const sessionFailed = city === null && auth.status === 'error'
+  const state = sessionFailed
+    ? { status: 'error' as const }
+    : result?.key === requestKey
+      ? result
+      : { status: 'loading' as const }
   const moreStatus = more?.key === requestKey ? more.status : 'idle'
 
-  /** Sets or removes (empty string) the given filters, keeping the other one. */
+  /** Sets or removes (empty string) the given filters, keeping the others. */
   const setFilters = useCallback(
-    (next: { q?: string; category?: string }) =>
+    (next: { q?: string; category?: string; city?: string }) =>
       setParams(
         (prev) => {
           const search = new URLSearchParams(prev)
@@ -105,9 +130,13 @@ export function FeedPage() {
     return () => clearTimeout(timer)
   }, [text, q, setFilters])
 
+  const query = { q: q || undefined, category: category || undefined, city: city || undefined }
+
   useEffect(() => {
+    // Until the user loads, their city is unknown: wait rather than list every city.
+    if (city === null) return
     let current = true
-    getFeed({ q: q || undefined, category: category || undefined }).then(
+    getFeed({ q: q || undefined, category: category || undefined, city: city || undefined }).then(
       (page) =>
         current &&
         setResult({
@@ -121,15 +150,15 @@ export function FeedPage() {
     return () => {
       current = false
     }
-  }, [q, category, requestKey])
+  }, [q, category, city, requestKey])
 
   function loadMore() {
     if (state.status !== 'ready' || !state.nextCursor) return
     const key = requestKey
     setMore({ key, status: 'loading' })
-    getFeed({ q: q || undefined, category: category || undefined, cursor: state.nextCursor }).then(
+    getFeed({ ...query, cursor: state.nextCursor }).then(
       (page) => {
-        // A page for a search or category that changed meanwhile is dropped.
+        // A page for filters that changed meanwhile is dropped.
         setResult((prev) =>
           prev?.key === key && prev.status === 'ready'
             ? { ...prev, listings: [...prev.listings, ...page.data], nextCursor: page.nextCursor }
@@ -141,9 +170,10 @@ export function FeedPage() {
     )
   }
 
+  /** Clears the search and the category; the city stays, it has its own "all". */
   function clearFilters() {
     setText('')
-    setParams(new URLSearchParams(), { replace: true })
+    setFilters({ q: '', category: '' })
   }
 
   return (
@@ -165,6 +195,20 @@ export function FeedPage() {
               setFilters({ q: '' })
             }}
           />
+          <Select
+            aria-label="Ubicación"
+            className="sm:w-64"
+            value={city === '' ? ALL_CITIES : (city ?? '')}
+            disabled={city === null}
+            onChange={(event) => setFilters({ city: event.target.value })}
+          >
+            <option value={ALL_CITIES}>Todas las ubicaciones</option>
+            {CITY_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
           {categories.length > 0 && (
             <ChipGroup role="group" aria-label="Categorías">
               <Chip selected={!category} onClick={() => setFilters({ category: '' })}>
@@ -195,7 +239,11 @@ export function FeedPage() {
             title="No pudimos cargar los artículos"
             description="Revisa tu conexión e inténtalo de nuevo."
             action={
-              <Button size="md" variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
+              <Button
+                size="md"
+                variant="secondary"
+                onClick={() => (sessionFailed ? auth.retry() : setAttempt((n) => n + 1))}
+              >
                 Reintentar
               </Button>
             }

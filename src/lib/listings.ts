@@ -87,14 +87,17 @@ export interface FeedQuery {
   q?: string
   /** Category slug. */
   category?: string
+  /** Seller's city; omit for every city (BRW-11). */
+  city?: City
   cursor?: string
 }
 
-/** Active listings, newest first, 20 per page (BRW-1, BRW-10). */
-export function getFeed({ q, category, cursor }: FeedQuery = {}): Promise<FeedPage> {
+/** Active listings, newest first, 20 per page (BRW-1, BRW-10, BRW-11). */
+export function getFeed({ q, category, city, cursor }: FeedQuery = {}): Promise<FeedPage> {
   const params = new URLSearchParams()
   if (q) params.set('q', q)
   if (category) params.set('category', category)
+  if (city) params.set('city', city)
   if (cursor) params.set('cursor', cursor)
   const query = params.toString()
   return api<FeedPage>(`/listings${query ? `?${query}` : ''}`)

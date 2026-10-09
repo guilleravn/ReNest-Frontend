@@ -10,3 +10,7 @@ export const CITY_OPTIONS: { value: City; label: string }[] = [
 export function cityLabel(city: City): string {
   return CITY_OPTIONS.find(({ value }) => value === city)?.label ?? city
 }
+
+export function isCity(value: unknown): value is City {
+  return CITY_OPTIONS.some((option) => option.value === value)
+}
