@@ -7,7 +7,6 @@ test.use({ viewport: { width: 375, height: 812 } })
 
 const TOKEN_KEY = 'renest.accessToken'
 
-/** Seeds the token on the first load only, so a discarded token stays discarded after a reload. */
 test('stays anonymous without asking the API when there is no token', async ({ page }) => {
   let meRequests = 0
   await page.route('**/api/v1/me', (route) => {
