@@ -28,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5175',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -72,10 +72,15 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /*
+   * Our own Vite, never the dev one: its port is fixed and its API proxy points
+   * to a port with nothing listening, so an unmocked request can't reach a
+   * running backend.
+   */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: 'npm run dev -- --port 5175 --strictPort',
+    url: 'http://localhost:5175',
+    reuseExistingServer: false,
+    env: { API_PROXY_TARGET: 'http://localhost:9' },
   },
 });

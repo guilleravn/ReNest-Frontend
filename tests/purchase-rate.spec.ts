@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { authResponse, unauthorizedError } from './fixtures/auth'
+import { expect, test, type Page } from './fixtures/test'
+import { unauthorizedError } from './fixtures/auth'
 import { internalError } from './fixtures/listings'
 import {
   RESERVATION_ID,
@@ -9,6 +9,7 @@ import {
   receptionNotConfirmedError,
   reservationNotFoundError,
 } from './fixtures/purchases'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -16,13 +17,6 @@ const RECAP = `/purchases/${RESERVATION_ID}`
 const RATE = `${RECAP}/rate`
 const THANKS = `${RECAP}/thanks`
 const RATING_URL = `**/api/v1/reservations/${RESERVATION_ID}/rating`
-
-async function logIn(page: Page) {
-  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 async function mockReservation(page: Page, detail: object = receivedReservationDetail) {
   await page.route(`**/api/v1/reservations/${RESERVATION_ID}`, (route) =>

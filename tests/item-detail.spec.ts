@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { authResponse, unauthorizedError } from './fixtures/auth'
+import { expect, test, type Page } from './fixtures/test'
+import { unauthorizedError } from './fixtures/auth'
 import {
   internalError,
   listingDetail,
@@ -7,20 +7,11 @@ import {
   listingNotFoundError,
   type ListingDetailFixture,
 } from './fixtures/listings'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const DETAIL = `/items/${listingDetail.id}`
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 async function mockListing(page: Page, listing: ListingDetailFixture) {
   await page.route(`**/api/v1/listings/${listing.id}`, (route) =>
@@ -100,12 +91,7 @@ test('sends a logged-out visitor to login when asking a question, then back (BRW
 })
 
 test('treats a session the API rejects as a visitor instead of sending to login (GEN-5)', async ({ page }) => {
-  await page.addInitScript((token) => {
-    if (!sessionStorage.getItem('seeded')) {
-      localStorage.setItem('renest.accessToken', token)
-      sessionStorage.setItem('seeded', '1')
-    }
-  }, authResponse.accessToken)
+  await logIn(page)
   await page.route('**/api/v1/me', (route) =>
     route.fulfill({ status: 401, json: unauthorizedError }),
   )

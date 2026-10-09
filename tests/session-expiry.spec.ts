@@ -1,15 +1,11 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, fakeJwt, unauthorizedError } from './fixtures/auth'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 test('logs out and sends to login when the API rejects the token, then returns (AUTH-6)', async ({ page }) => {
-  await page.addInitScript((token) => {
-    if (!sessionStorage.getItem('seeded')) {
-      localStorage.setItem('renest.accessToken', token)
-      sessionStorage.setItem('seeded', '1')
-    }
-  }, fakeJwt(3600, 'rejected-by-the-server'))
+  await logIn(page, { token: fakeJwt(3600, 'rejected-by-the-server') })
   await page.route('**/api/v1/me', (route) =>
     route.request().headers().authorization === `Bearer ${authResponse.accessToken}`
       ? route.fulfill({ status: 200, json: authResponse.user })
@@ -32,12 +28,7 @@ test('logs out and sends to login when the API rejects the token, then returns (
 })
 
 test('treats an expired token as logged out before any request (AUTH-6)', async ({ page }) => {
-  await page.addInitScript((token) => {
-    if (!sessionStorage.getItem('seeded')) {
-      localStorage.setItem('renest.accessToken', token)
-      sessionStorage.setItem('seeded', '1')
-    }
-  }, fakeJwt(-60))
+  await logIn(page, { token: fakeJwt(-60) })
   await page.goto('/listings/new')
 
   await expect(page).toHaveURL(/\/login$/)
@@ -45,7 +36,7 @@ test('treats an expired token as logged out before any request (AUTH-6)', async 
 })
 
 test('treats an unreadable token as logged out (AUTH-6)', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('renest.accessToken', 'not-a-jwt'))
+  await logIn(page, { token: 'not-a-jwt' })
   await page.goto('/listings/new')
 
   await expect(page).toHaveURL(/\/login$/)
@@ -55,10 +46,7 @@ test('logs out and sends to login when the token expires while the app is open (
   page,
 }) => {
   await page.clock.install()
-  await page.addInitScript((token) => localStorage.setItem('renest.accessToken', token), authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+  await logIn(page)
   await page.goto('/account')
   await expect(page.getByText('laura@example.com')).toBeVisible()
 

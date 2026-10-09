@@ -1,5 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
+import { expect, test, type Page } from './fixtures/test'
 import { categories, internalError } from './fixtures/feed'
 import {
   categoryNotFoundError,
@@ -14,18 +13,9 @@ import {
   unauthorizedError,
   uploadedPhoto,
 } from './fixtures/new-listing'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 async function mockCategories(page: Page) {
   await page.route('**/api/v1/categories', (route) =>

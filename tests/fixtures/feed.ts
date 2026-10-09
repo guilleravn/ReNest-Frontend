@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 // GET /listings and GET /categories payloads (API contract §2, §4).
 
 /** 1×1 PNG so each card has a real image to load. */
@@ -53,4 +55,14 @@ export const internalError = {
   code: 'INTERNAL_ERROR',
   message: 'Internal server error',
   details: null,
+}
+
+/** Answers the feed (categories and its first page) with no listings. */
+export async function mockEmptyFeed(page: Page) {
+  await page.route('**/api/v1/categories', (route) =>
+    route.fulfill({ status: 200, json: categories }),
+  )
+  await page.route(/\/api\/v1\/listings(\?.*)?$/, (route) =>
+    route.fulfill({ status: 200, json: feedPage([]) }),
+  )
 }

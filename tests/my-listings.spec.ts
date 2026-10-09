@@ -1,7 +1,8 @@
-import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
+import { expect, test, type Page } from './fixtures/test'
 import { internalError } from './fixtures/listings'
 import { activeItem, completedItem, pendingItem } from './fixtures/my-listings'
+import { pendingSale } from './fixtures/reservations'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -9,16 +10,6 @@ const BY_STATUS: Record<string, unknown[]> = {
   ACTIVE: [activeItem],
   PENDING: [pendingItem],
   COMPLETED: [completedItem],
-}
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
 }
 
 /** Answers each tab from `data`, and records the requested statuses. */
@@ -88,6 +79,9 @@ test('shows Completed listings with who bought them, and no bell (SAL-5)', async
 test('opens a Pending listing on its sale detail (SAL-3)', async ({ page }) => {
   await logIn(page)
   await mockMyListings(page)
+  await page.route(`**/api/v1/reservations/${pendingSale.id}`, (route) =>
+    route.fulfill({ status: 200, json: pendingSale }),
+  )
 
   await page.goto('/listings?status=PENDING')
   await page.getByRole('link', { name: /Bicicleta urbana rodado 28/ }).click()

@@ -1,5 +1,4 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
+import { expect, test, type Page, type Route } from './fixtures/test'
 import {
   listingNotEditableError,
   notListingOwnerError,
@@ -21,20 +20,16 @@ import {
   photoFile,
   uploadedPhoto,
 } from './fixtures/new-listing'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const EDIT = `/listings/${listingDetail.id}/edit`
 const [photo0, photo1, photo2] = ownListingDetail.photos
 
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+/** Logs in as the seller of `activeItem`, with the categories the form needs. */
+async function logInAsSeller(page: Page) {
+  await logIn(page)
   await page.route('**/api/v1/categories', (route) =>
     route.fulfill({ status: 200, json: categories }),
   )
@@ -67,7 +62,7 @@ async function mockListing(
 const saveButton = (page: Page) => page.getByRole('button', { name: 'Guardar cambios' })
 
 test('opens the form prefilled with the listing as it is now (C3)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page)
 
   await page.goto(EDIT)
@@ -91,7 +86,7 @@ test('opens the form prefilled with the listing as it is now (C3)', async ({ pag
 })
 
 test('saves the details and the whole photo set, then returns to My Listings (LST-12)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   const saved = await mockListing(page)
   await page.route('**/api/v1/uploads/photos', (route) =>
     route.fulfill({ status: 201, json: uploadedPhoto(1) }),
@@ -127,7 +122,7 @@ test('saves the details and the whole photo set, then returns to My Listings (LS
 })
 
 test('shows the same field errors as publishing and saves nothing (LST-1, LST-3)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   const saved = await mockListing(page)
 
   await page.goto(EDIT)
@@ -144,7 +139,7 @@ test('shows the same field errors as publishing and saves nothing (LST-1, LST-3)
 })
 
 test('keeps the photos in their new order, the first one being the cover (LST-12)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   const saved = await mockListing(page)
 
   await page.goto(EDIT)
@@ -159,7 +154,7 @@ test('keeps the photos in their new order, the first one being the cover (LST-12
 })
 
 test('explains that a reserved listing can no longer be edited (LST-11)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, ownListingDetail, (route) =>
     route.fulfill({ status: 409, json: listingNotEditableError }),
   )
@@ -176,7 +171,7 @@ test('explains that a reserved listing can no longer be edited (LST-11)', async 
 test.describe('a listing that is no longer Active', () => {
   for (const status of ['PENDING', 'COMPLETED'] as const) {
     test(`shows no form when the listing is ${status} (LST-11)`, async ({ page }) => {
-      await logIn(page)
+      await logInAsSeller(page)
       await mockListing(page, {
         ...ownListingDetail,
         status,
@@ -193,7 +188,7 @@ test.describe('a listing that is no longer Active', () => {
 })
 
 test('marks the category when it no longer exists (LST-1)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, ownListingDetail, (route) =>
     route.fulfill({ status: 422, json: categoryNotFoundError }),
   )
@@ -207,7 +202,7 @@ test('marks the category when it no longer exists (LST-1)', async ({ page }) => 
 })
 
 test('asks to upload the new photos again when the API rejects one (LST-12)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, ownListingDetail, (route) =>
     route.fulfill({ status: 422, json: invalidPhotoKeyError }),
   )
@@ -221,7 +216,7 @@ test('asks to upload the new photos again when the API rejects one (LST-12)', as
 })
 
 test('marks the photos when the API rejects the photo set (LST-1, LST-12)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, ownListingDetail, (route) =>
     route.fulfill({ status: 400, json: photoValidationError }),
   )
@@ -239,7 +234,7 @@ test('marks the photos when the API rejects the photo set (LST-1, LST-12)', asyn
 })
 
 test('keeps the changes and lets me retry when saving fails', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   let failing = true
   const saved = await mockListing(page, ownListingDetail, (route) =>
     failing
@@ -262,7 +257,7 @@ test('keeps the changes and lets me retry when saving fails', async ({ page }) =
 })
 
 test('sends another seller’s listing to the buyer view (LST-11)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, listingDetailForBuyer)
 
   await page.goto(EDIT)
@@ -271,7 +266,7 @@ test('sends another seller’s listing to the buyer view (LST-11)', async ({ pag
 })
 
 test('sends me to the buyer view when the API says I am not the owner (LST-11)', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await mockListing(page, ownListingDetail, (route) =>
     route.fulfill({ status: 403, json: notListingOwnerError }),
   )
@@ -283,7 +278,7 @@ test('sends me to the buyer view when the API says I am not the owner (LST-11)',
 })
 
 test('shows a loading state while the listing loads', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route(`**/api/v1/listings/${listingDetail.id}`, async (route) => {
@@ -299,7 +294,7 @@ test('shows a loading state while the listing loads', async ({ page }) => {
 })
 
 test('explains a listing that does not exist', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   await page.route(`**/api/v1/listings/${listingDetail.id}`, (route) =>
     route.fulfill({ status: 404, json: listingNotFoundError }),
   )
@@ -311,7 +306,7 @@ test('explains a listing that does not exist', async ({ page }) => {
 })
 
 test('explains when the listing cannot load and lets me retry', async ({ page }) => {
-  await logIn(page)
+  await logInAsSeller(page)
   let failing = true
   await page.route(`**/api/v1/listings/${listingDetail.id}`, (route) =>
     failing

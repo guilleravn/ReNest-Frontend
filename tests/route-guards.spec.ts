@@ -1,20 +1,17 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures/test'
 import { authResponse, fakeJwt, unauthorizedError } from './fixtures/auth'
+import { logIn, mockSession } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 const TOKEN_KEY = 'renest.accessToken'
 
-async function storeToken(page: import('@playwright/test').Page, token: string) {
-  await page.addInitScript(
-    ([key, value]) => localStorage.setItem(key, value),
-    [TOKEN_KEY, token],
-  )
-}
-
 test('sends an anonymous user to login and back after logging in', async ({
   page,
 }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   await page.route('**/api/v1/auth/login', (route) =>
     route.fulfill({ status: 200, json: authResponse }),
   )
@@ -32,6 +29,7 @@ test('sends an anonymous user to login and back after logging in', async ({
 test('keeps the return path when switching from login to register', async ({
   page,
 }) => {
+  await mockSession(page)
   await page.goto('/purchases')
   await page.getByRole('link', { name: 'Regístrate' }).click()
   await expect(page).toHaveURL(/\/register$/)
@@ -49,10 +47,7 @@ test('keeps the return path when switching from login to register', async ({
 })
 
 test('lets a logged-in user into a protected route', async ({ page }) => {
-  await storeToken(page, authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+  await logIn(page)
 
   await page.goto('/purchases')
 
@@ -60,7 +55,7 @@ test('lets a logged-in user into a protected route', async ({ page }) => {
 })
 
 test('sends a user with an expired token to login', async ({ page }) => {
-  await storeToken(page, fakeJwt(3600, 'rejected-by-the-server'))
+  await logIn(page, { token: fakeJwt(3600, 'rejected-by-the-server') })
   await page.route('**/api/v1/me', (route) =>
     route.fulfill({ status: 401, json: unauthorizedError }),
   )
@@ -73,10 +68,8 @@ test('sends a user with an expired token to login', async ({ page }) => {
 test('redirects a logged-in user away from login and register', async ({
   page,
 }) => {
-  await storeToken(page, authResponse.accessToken)
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
+  await mockEmptyFeed(page)
+  await logIn(page)
 
   await page.goto('/login')
   await expect(page).toHaveURL(/\/feed$/)
@@ -86,12 +79,12 @@ test('redirects a logged-in user away from login and register', async ({
 })
 
 test('treats an expired token as logged out before any request (AUTH-6)', async ({ page }) => {
+  await logIn(page, { token: fakeJwt(-60) })
   let meRequests = 0
   await page.route('**/api/v1/me', (route) => {
     meRequests += 1
     return route.fulfill({ status: 200, json: authResponse.user })
   })
-  await storeToken(page, fakeJwt(-60))
 
   await page.goto('/purchases')
 
@@ -101,6 +94,8 @@ test('treats an expired token as logged out before any request (AUTH-6)', async 
 })
 
 test('ignores a return address outside the app', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   await page.route('**/api/v1/auth/login', (route) =>
     route.fulfill({ status: 200, json: authResponse }),
   )
@@ -120,7 +115,7 @@ test('ignores a return address outside the app', async ({ page }) => {
 test('keeps the user logged in and offers a retry when the session cannot load', async ({
   page,
 }) => {
-  await storeToken(page, authResponse.accessToken)
+  await logIn(page)
   let failing = true
   await page.route('**/api/v1/me', (route) =>
     failing
@@ -146,7 +141,7 @@ test('keeps the user logged in and offers a retry when the session cannot load',
 })
 
 test('shows a loading state while the session loads', async ({ page }) => {
-  await storeToken(page, authResponse.accessToken)
+  await logIn(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route('**/api/v1/me', async (route) => {

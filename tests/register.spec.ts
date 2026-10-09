@@ -1,5 +1,7 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures/test'
 import { authResponse, emailTakenError, rateLimitedError, validationError } from './fixtures/auth'
+import { mockSession } from './fixtures/session'
+import { mockEmptyFeed } from './fixtures/feed'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -13,6 +15,8 @@ async function fillForm(page: Page, { phone = '71234567' } = {}) {
 }
 
 test('registers, stores the token and lands on the feed', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   let body: unknown
   await page.route('**/api/v1/auth/register', (route) => {
     body = route.request().postDataJSON()
@@ -35,6 +39,8 @@ test('registers, stores the token and lands on the feed', async ({ page }) => {
 })
 
 test('shows the loading state while the account is created', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   let release!: () => void
   const held = new Promise<void>((resolve) => (release = resolve))
   await page.route('**/api/v1/auth/register', async (route) => {
@@ -76,6 +82,8 @@ test('shows each rejected field under its input', async ({ page }) => {
 })
 
 test('prefixes the phone with the calling code of the chosen zone', async ({ page }) => {
+  await mockSession(page)
+  await mockEmptyFeed(page)
   let body: { phoneE164?: string } = {}
   await page.route('**/api/v1/auth/register', (route) => {
     body = route.request().postDataJSON()

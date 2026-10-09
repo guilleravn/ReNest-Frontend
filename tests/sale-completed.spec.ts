@@ -1,11 +1,11 @@
-import { expect, test, type Page } from '@playwright/test'
-import { authResponse } from './fixtures/auth'
+import { expect, test } from './fixtures/test'
 import {
   internalError,
   listingNotFoundError,
   ownListingDetail,
   type ListingDetailFixture,
 } from './fixtures/listings'
+import { logIn } from './fixtures/session'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
@@ -18,16 +18,6 @@ const soldListing: ListingDetailFixture = {
 
 const PAGE = `/listings/${soldListing.id}/sale-completed`
 const API = `**/api/v1/listings/${soldListing.id}`
-
-async function logIn(page: Page) {
-  await page.addInitScript(
-    (token) => localStorage.setItem('renest.accessToken', token),
-    authResponse.accessToken,
-  )
-  await page.route('**/api/v1/me', (route) =>
-    route.fulfill({ status: 200, json: authResponse.user }),
-  )
-}
 
 test('celebrates the sale and reminds me the buyer can still confirm and rate (SAL-4, PUR-2)', async ({ page }) => {
   await logIn(page)
