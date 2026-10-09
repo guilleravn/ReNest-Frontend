@@ -3,12 +3,17 @@ import { defineConfig, devices } from '@playwright/test'
 // Runs the specs in tests/real against the real backend (test database) and
 // the real frontend, with no mocks. Needs `npm run db:up` in the backend.
 // It uses its own ports (API 3100, app 5174), so it can run next to the dev servers.
+// The seed loads the categories a listing needs; it is idempotent.
+// storage-init only creates the dev bucket, so it is rerun here to create the
+// test bucket the seed uploads its photos to (a no-op when it exists).
 const backendCommand = [
   'cd ../ReNest-Backend',
   'set -a && . ./.env && set +a',
-  'export DATABASE_URL="$DATABASE_URL_TEST" NODE_ENV=test PORT=3100',
+  'export DATABASE_URL="$DATABASE_URL_TEST" S3_BUCKET="$S3_BUCKET_TEST" NODE_ENV=test PORT=3100',
   'export AUTH_LOGIN_LIMIT=5 AUTH_LOGIN_WINDOW=1m AUTH_REGISTER_LIMIT=1000',
+  'docker compose run --rm -e BUCKET="$S3_BUCKET" storage-init',
   'npx prisma migrate deploy',
+  'npm run seed',
   'npx nest start',
 ].join(' && ')
 
