@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { CircleAlert, PackageX, Pencil } from 'lucide-react'
+import { CalendarClock, CircleAlert, PackageX, Pencil } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
 import { ImageGallery } from '@/components/listing/image-gallery'
@@ -131,6 +131,17 @@ export function ListingDetailPage() {
                       />
                     ))}
                   </PickupSlotList>
+                  {/* Pairs change only while Active (SAL-6, C2). */}
+                  {listing.viewer.canEdit && (
+                    <ButtonLink
+                      to={`/listings/${listing.id}/pickup-times`}
+                      variant="outline"
+                      fullWidth
+                    >
+                      <CalendarClock className="size-4" aria-hidden />
+                      Configurar mis horarios
+                    </ButtonLink>
+                  )}
                 </section>
               ) : (
                 <InfoPanel title="Este artículo ya no está activo">
