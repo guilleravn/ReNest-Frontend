@@ -79,3 +79,14 @@ export function confirmReception(id: string, answers: ReceptionAnswers): Promise
     body: { ...answers, hasItemNow: true },
   })
 }
+
+/**
+ * Buyer only, once, after reception (PUR-8). Rejections:
+ * 409 ALREADY_RATED, 409 RECEPTION_NOT_CONFIRMED.
+ */
+export function rateSeller(id: string, stars: number): Promise<{ stars: number; createdAt: string }> {
+  return api<{ stars: number; createdAt: string }>(`/reservations/${encodeURIComponent(id)}/rating`, {
+    method: 'POST',
+    body: { stars },
+  })
+}

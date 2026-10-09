@@ -74,6 +74,14 @@ export const receptionChecklist = {
   createdAt: '2026-10-09T12:00:00.000Z',
 }
 
+/** The buyer's view once reception is confirmed and the seller is still unrated (PUR-8). */
+export const receivedReservationDetail = {
+  ...reservationDetail,
+  buyerReceivedAt: '2026-10-09T12:00:00.000Z',
+  receptionChecklist,
+  actions: { canConfirmHandover: false, canConfirmReception: false, canRate: true },
+}
+
 export type ReservationDetailFixture = typeof reservationDetail
 
 export const reservationNotFoundError = {
@@ -87,5 +95,19 @@ export const receptionAlreadyConfirmedError = {
   statusCode: 409,
   code: 'RECEPTION_ALREADY_CONFIRMED',
   message: 'The reception was already confirmed.',
+  details: null,
+}
+
+export const alreadyRatedError = {
+  statusCode: 409,
+  code: 'ALREADY_RATED',
+  message: 'The seller was already rated for this purchase.',
+  details: null,
+}
+
+export const receptionNotConfirmedError = {
+  statusCode: 409,
+  code: 'RECEPTION_NOT_CONFIRMED',
+  message: 'Confirm the reception before rating the seller.',
   details: null,
 }
