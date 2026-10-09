@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CircleAlert, PackageX } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { SessionHeader } from '@/components/layout/session-header'
-import { PickupSummaryCard } from '@/components/listing/pickup-summary-card'
 import { ProductSummary } from '@/components/listing/product-summary'
 import { Button, ButtonLink } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -17,16 +16,13 @@ import { ApiError } from '@/lib/api'
 import { ErrorCode } from '@/lib/error-codes'
 import { conditionLabel, formatPickupTime, formatPrice } from '@/lib/format'
 import { getListing, type ListingDetail, type PickupOption } from '@/lib/listings'
-import { mapsHref } from '@/lib/maps'
-import { createReservation, type ReservationDetail } from '@/lib/reservations'
-import { pickupMessage, whatsappHref } from '@/lib/whatsapp'
+import { createReservation } from '@/lib/reservations'
 
 type State =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'not-found' }
   | { status: 'ready'; listing: ListingDetail }
-  | { status: 'reserved'; reservation: ReservationDetail }
   /** Someone else reserved it first (RES-5). */
   | { status: 'taken' }
 
@@ -78,7 +74,8 @@ export function ItemSchedulePickupPage() {
     setNotice(null)
     try {
       const reservation = await createReservation(listing.id, selected.id)
-      setState({ status: 'reserved', reservation })
+      // Replace the form, so back and reload don't return to a listing that's gone.
+      navigate(`/purchases/${reservation.id}`, { replace: true, state: { justReserved: true } })
     } catch (error) {
       handleReserveError(error)
     } finally {
@@ -111,7 +108,7 @@ export function ItemSchedulePickupPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <SessionHeader backTo={state.status === 'reserved' ? '/feed' : `/items/${id}`} />
+      <SessionHeader backTo={`/items/${id}`} />
       <PageContainer width="narrow" bottomSpace={listing ? 'actions' : 'default'} className="space-y-6">
         {state.status === 'loading' && (
           <p role="status" className="py-16 text-center text-sm text-text-muted">
@@ -190,8 +187,6 @@ export function ItemSchedulePickupPage() {
             }
           />
         )}
-
-        {state.status === 'reserved' && <ReservedSummary reservation={state.reservation} />}
       </PageContainer>
 
       {listing && (
@@ -214,36 +209,5 @@ export function ItemSchedulePickupPage() {
         {selected && <InfoPanel title={selected.locationLabel}>{pickupTime(selected)}</InfoPanel>}
       </ConfirmDialog>
     </div>
-  )
-}
-
-function ReservedSummary({ reservation }: { reservation: ReservationDetail }) {
-  const { listing, pickupOption, counterpart: seller } = reservation
-
-  return (
-    <>
-      <PageHeader
-        overline="Recogida agendada"
-        title="¡Listo, es tuyo!"
-        description="Escríbele al vendedor para acordar el día exacto. Encontrarás esta reserva en Mis compras."
-      />
-      <ProductSummary title={listing.title} price={formatPrice(listing.priceCents)} />
-      <PickupSummaryCard
-        personRole="Vendedor"
-        personName={seller.fullName}
-        personAvatarSrc={seller.avatarUrl ?? undefined}
-        personVerified={seller.isVerified}
-        pickupPlace={pickupOption.locationLabel}
-        pickupTime={pickupTime(pickupOption)}
-        whatsappHref={whatsappHref(
-          seller.phoneE164,
-          pickupMessage(seller.fullName, listing.title, pickupOption.locationLabel),
-        )}
-        mapHref={mapsHref(pickupOption.locationLabel)}
-      />
-      <ButtonLink to="/feed" variant="secondary" fullWidth>
-        Ver más productos
-      </ButtonLink>
-    </>
   )
 }
